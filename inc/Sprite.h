@@ -13,10 +13,15 @@ namespace codal
         Image image;
         uint16_t flags;
 
+        int startX;
+        int startY;
+
         public:
         PhysicsBody& body;
 
         Sprite(PhysicsBody& body, Image& i);
+
+        int reset();
 
         int setImage(Image& i);
 

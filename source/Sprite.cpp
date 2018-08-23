@@ -14,6 +14,16 @@ int Sprite::fill(uint8_t colour)
 Sprite::Sprite(PhysicsBody& body, Image& i) : body(body)
 {
     this->image = i;
+    this->startX = body.position.x;
+    this->startY = body.position.y;
+}
+
+int Sprite::reset()
+{
+    body.position.x = this->startX;
+    body.position.y = this->startY;
+
+    return DEVICE_OK;
 }
 
 int Sprite::setImage(Image& newImage)

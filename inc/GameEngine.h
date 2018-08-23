@@ -10,19 +10,42 @@
 #define GAME_ENGINE_MAX_SPRITES         20
 #define GAME_ENGINE_EVT_UPDATE          2
 
+#define GAME_ENGINE_STATUS_STOPPED      0x02
+#define GAME_ENGINE_STATUS_IN_PROGRESS  0x04
+
 namespace codal
 {
     class GameEngine : public CodalComponent
     {
         Image& displayBuffer;
 
+        int maxPlayers;
+        int playerCount;
+
+        uint32_t gameIdentifier;
+
+        ManagedString name;
+
         protected:
         Sprite* sprites[GAME_ENGINE_MAX_SPRITES];
 
         public:
-        GameEngine(Image& displayBuffer, uint16_t id = DEVICE_ID_GAME_ENGINE);
+        GameEngine(Image& displayBuffer, int maxPlayers = 1, uint16_t id = DEVICE_ID_GAME_ENGINE);
+
+        uint32_t getIdentifier();
+
+        int start();
+        int stop();
+        int reset();
+
+        bool isRunning();
 
         int setDisplayBuffer(Image& i);
+
+        ManagedString getName();
+
+        int getMaxPlayers();
+        int getSlotsAvailable();
 
         int add(Sprite& s);
         int remove(Sprite& s);

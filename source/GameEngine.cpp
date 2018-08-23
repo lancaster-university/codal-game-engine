@@ -6,14 +6,72 @@
 
 using namespace codal;
 
-GameEngine::GameEngine(Image& displayBuffer, uint16_t id) : displayBuffer(displayBuffer)
+GameEngine::GameEngine(Image& displayBuffer, uint32_t identifier, int maxPlayers, uint16_t id) : displayBuffer(displayBuffer)
 {
     DMESG("GE CONS");
     memset(sprites, 0, GAME_ENGINE_MAX_SPRITES * sizeof(Sprite*));
+
     system_timer_event_every(4, id, GAME_ENGINE_EVT_UPDATE);
+
+    this->status = GAME_ENGINE_STATUS_STOPPED;
+
+    this->maxPlayers = maxPlayers;
+
+    this->playerCount = 1;
+    this->gameIdentifier = identifier;
 
     if (EventModel::defaultEventBus)
         EventModel::defaultEventBus->listen(DEVICE_ID_DISPLAY, DISPLAY_EVT_RENDER_START, this, &GameEngine::update, MESSAGE_BUS_LISTENER_IMMEDIATE);
+}
+
+int GameEngine::getMaxPlayers()
+{
+    return this->maxPlayers;
+}
+
+int GameEngine::getSlotsAvailable()
+{
+    return this->maxPlayers - this->playerCount;
+}
+
+int GameEngine::start()
+{
+    this->status = GAME_ENGINE_STATUS_IN_PROGRESS;
+    return DEVICE_OK;
+}
+
+int GameEngine::stop()
+{
+    this->status = GAME_ENGINE_STATUS_STOPPED;
+    return DEVICE_OK;
+}
+
+int GameEngine::reset()
+{
+    for (int i = 0; i < GAME_ENGINE_MAX_SPRITES; i++)
+    {
+        if (sprites[i] == NULL)
+            continue;
+
+        sprites[i]->reset();
+    }
+
+    return DEVICE_OK;
+}
+
+bool GameEngine::isRunning()
+{
+    return (this->status & GAME_ENGINE_STATUS_IN_PROGRESS) ? true : false;
+}
+
+ManagedString GameEngine::getName()
+{
+    return this->name;
+}
+
+uint32_t GameEngine::getIdentifier()
+{
+    return this->gameIdentifier;
 }
 
 int GameEngine::setDisplayBuffer(Image& i)
@@ -60,6 +118,8 @@ int GameEngine::remove(Sprite& s)
 
 void GameEngine::update(Event)
 {
+    if (status & GAME_STATUS)
+
     displayBuffer.clear();
 
     for (int i = 0; i < GAME_ENGINE_MAX_SPRITES; i++)

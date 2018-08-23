@@ -31,8 +31,10 @@ In addition it specifies the following data payload:
 
 struct GameStateControl
 {
-    uint16_t game_hash;         // hash of the game name
+    uint16_t game_id;           // used to identify different games
     uint8_t slots_available;    // the availability of the player slots in the game, (0 == no player slots available)
+    uint8_t max_players;        // slots_available
+    uint8_t game_name[16];      // a textual name, must include null terminator (therefore 15 chars for a name)
 };
 ```
 
@@ -46,8 +48,10 @@ The process is as follows:
         - if the same, check the number of players
             - join if possible (whether as a spectator or player)
                 - a join is performed by setting the packet type to join
-                - if both sides agree a join is complete, no further packets are sent and both should then store the control packet device address for future use. slots_available is decremented,
-                - if disagree, the one who is joining receives the same packet and payload as they send with the NACK flag set
+                - the host receives the join request
+                - if join is permitted, sends the same packet with the ack flag set
+                - if join is not permitted, no ack flag is set.
+                - on a successful join both should then store the control packet device address for future use. slots_available is decremented.
 
 ## State Synchronisation
 
@@ -70,7 +74,7 @@ I think the best approach is some combination of the two:
 
 ## How is the host determined?
 
-This could be set manually in code, or arcades could wake and check to see if control packets with a matching game hash are already being broadcast, and join that host.
+This could be set manually in code, or arcades could wake and check to see if control packets with a matching game hash are already being broadcast, and join that host. I think the best option is to make it selectable via some sort of menu, then multiple arcades could be running the same "game" but running different instances.
 
 ## How is sprite ownership handled? Is the concept of ownership necessary?
 
