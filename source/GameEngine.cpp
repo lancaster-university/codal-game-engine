@@ -6,7 +6,7 @@
 
 using namespace codal;
 
-GameEngine::GameEngine(Image& displayBuffer, uint32_t identifier, int maxPlayers, uint16_t id) : displayBuffer(displayBuffer)
+GameEngine::GameEngine(Image& displayBuffer, ManagedString gameName, uint32_t identifier, int maxPlayers, uint16_t id) : displayBuffer(displayBuffer)
 {
     DMESG("GE CONS");
     memset(sprites, 0, GAME_ENGINE_MAX_SPRITES * sizeof(Sprite*));
@@ -20,6 +20,8 @@ GameEngine::GameEngine(Image& displayBuffer, uint32_t identifier, int maxPlayers
     this->playerCount = 1;
     this->gameIdentifier = identifier;
 
+    this->name = gameName;
+
     if (EventModel::defaultEventBus)
         EventModel::defaultEventBus->listen(DEVICE_ID_DISPLAY, DISPLAY_EVT_RENDER_START, this, &GameEngine::update, MESSAGE_BUS_LISTENER_IMMEDIATE);
 }
@@ -29,7 +31,7 @@ int GameEngine::getMaxPlayers()
     return this->maxPlayers;
 }
 
-int GameEngine::getSlotsAvailable()
+int GameEngine::getAvailableSlots()
 {
     return this->maxPlayers - this->playerCount;
 }
@@ -118,7 +120,8 @@ int GameEngine::remove(Sprite& s)
 
 void GameEngine::update(Event)
 {
-    if (status & GAME_STATUS)
+    if (status & GAME_ENGINE_STATUS_STOPPED)
+        return;
 
     displayBuffer.clear();
 

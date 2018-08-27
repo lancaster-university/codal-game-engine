@@ -19,7 +19,9 @@ namespace codal
         public:
         PhysicsBody& body;
 
-        Sprite(PhysicsBody& body, Image& i);
+        uint16_t variableHash;
+
+        Sprite(ManagedString name, PhysicsBody& body, Image& i);
 
         int reset();
 

@@ -30,7 +30,7 @@ namespace codal
         Sprite* sprites[GAME_ENGINE_MAX_SPRITES];
 
         public:
-        GameEngine(Image& displayBuffer, int maxPlayers = 1, uint16_t id = DEVICE_ID_GAME_ENGINE);
+        GameEngine(Image& displayBuffer, ManagedString gameName, uint32_t identifier, int maxPlayers = 1, uint16_t id = DEVICE_ID_GAME_ENGINE);
 
         uint32_t getIdentifier();
 
@@ -45,7 +45,7 @@ namespace codal
         ManagedString getName();
 
         int getMaxPlayers();
-        int getSlotsAvailable();
+        int getAvailableSlots();
 
         int add(Sprite& s);
         int remove(Sprite& s);

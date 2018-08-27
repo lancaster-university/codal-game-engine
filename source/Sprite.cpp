@@ -1,5 +1,6 @@
 #include "Sprite.h"
 #include "CodalDmesg.h"
+#include "PearsonHash.h"
 
 using namespace codal;
 
@@ -11,8 +12,9 @@ int Sprite::fill(uint8_t colour)
 }
 
 
-Sprite::Sprite(PhysicsBody& body, Image& i) : body(body)
+Sprite::Sprite(ManagedString name, PhysicsBody& body, Image& i) : body(body)
 {
+    this->variableHash = PearsonHash::hash16(name);
     this->image = i;
     this->startX = body.position.x;
     this->startY = body.position.y;
@@ -39,7 +41,7 @@ Image Sprite::getImage()
 
 int Sprite::drawCircle(uint16_t x, uint16_t y, int radius, int colour)
 {
-
+    return DEVICE_NOT_IMPLEMENTED;
 }
 
 int Sprite::drawRectangle(uint16_t x, uint16_t y, int width, int height, int colour)
@@ -112,6 +114,8 @@ int Sprite::drawRectangle(uint16_t x, uint16_t y, int width, int height, int col
     //     }
     //     p += bh;
     // }
+
+    return DEVICE_OK;
 }
 
 void Sprite::draw(Image& display)

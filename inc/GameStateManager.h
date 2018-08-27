@@ -1,10 +1,9 @@
-#ifndef PKT_BRIDGE_DRIVER_H
-#define PKT_BRIDGE_DRIVER_H
+#ifndef GAME_STATE_MANAGER_H
+#define GAME_STATE_MANAGER_H
 
 #include "PktSerialProtocol.h"
-#include "MessageBus.h"
-#include "Radio.h"
-#include "ManagedBuffer.h"
+#include "ManagedString.h"
+#include "GameEngine.h"
 
 #define GS_CONTROL_PKT_TYPE_ADVERTISEMENT           0x02
 // flags mean something different in a advert packet
@@ -28,6 +27,12 @@
 #define GS_EVENT_SEND_GAME_STATE                    5
 
 #define GAME_STATE_NAME_SIZE                        13
+
+#define GAME_STATE_STATUS_LISTING_GAMES             0x02
+#define GAME_STATE_STATUS_ADVERTISING               0x04
+
+#define PKT_ARCADE_EVT_PLAYER_JOIN_RESULT           2
+#define PKT_ARCADE_PLAYER_STATUS_JOIN_SUCCESS       0x02
 
 namespace codal
 {
@@ -65,7 +70,7 @@ namespace codal
         float cdy;
     };
 
-    struct GameStateControl
+    struct GameAdvertisement
     {
         uint32_t game_id;           // used to identify different games
         uint8_t slots_available;    // the availability of the player slots in the game, (0 == no player slots available)
@@ -73,57 +78,93 @@ namespace codal
         uint8_t game_name[GAME_STATE_NAME_SIZE + 1];      // a textual name, must include null terminator (therefore 13 chars for a name)
     };
 
+    struct GameAdvertListItem
+    {
+        uint32_t serial_number;
+        GameAdvertisement* item;
+        GameAdvertListItem* next;
+    };
+
+    class GameStateManager;
+
     class PktArcadeDevice : public PktSerialDriver
     {
         public:
         uint8_t playerNumber;
         PktArcadeDevice* next;
+        GameStateManager& manager;
 
-        PktArcadeDevice(PktDevice d, uint8_t playerNumber, GameEngine& ge);
+        PktArcadeDevice(PktDevice d, uint8_t playerNumber, GameStateManager& manager, uint16_t id) :
+                PktSerialDriver(d, PKT_DRIVER_CLASS_ARCADE, id),
+                manager(manager)
+        {
+            playerNumber = playerNumber;
+            next = NULL;
+        }
 
-        virtual void handleControlPacket(ControlPacket* cp);
+        virtual void handleControlPacket(ControlPacket* cp) {}
 
         virtual void handlePacket(PktSerialPkt* p);
     };
 
     class PktArcadeHost : public PktArcadeDevice
     {
-        PktArcadeHost(PktDevice d, uint8_t playerNumber, GameEngine& ge);
-
-        virtual void handleControlPacket(ControlPacket* cp);
-
-        virtual void handlePacket(PktSerialPkt* p);
-    };
-
-    class PktArcadePlayer : public PktArcadeDevice
-    {
-        PktArcadeHost(PktDevice d, uint8_t playerNumber, GameEngine& ge);
-
-        virtual void handleControlPacket(ControlPacket* cp);
-
-        virtual void handlePacket(PktSerialPkt* p);
-    };
-
-
-    class PktGameStateDriver : public PktSerialDriver
-    {
-        GameEngine& engine;
-        EventModel& messageBus;
-        PktArcadeDevice* host;
-        PktArcadeDevice* players;
+        GameAdvertListItem* games;
 
         public:
-        PktGameStateDriver(PktSerialProtocol& proto, GameEngine& ge, EventModel& messageBus, uint16_t id = DEVICE_ID_PKT_GAME_STATE_DRIVER);
-
-        int sendAdvertisements(bool advertise);
-
-        int sendGameState();
+        PktArcadeHost(PktDevice d, uint8_t playerNumber, GameStateManager& manager);
 
         virtual int queueControlPacket();
 
         virtual void handleControlPacket(ControlPacket* cp);
 
-        virtual void handlePacket(PktSerialPkt* p);
+        GameAdvertListItem* getGamesList();
+
+        ~PktArcadeHost();
+    };
+
+    class PktArcadePlayer : public PktArcadeDevice
+    {
+        int sendJoinSpectateRequest(GameAdvertisement* ad, uint16_t flags);
+
+        public:
+        PktArcadePlayer(PktDevice d, uint8_t playerNumber, GameStateManager& manager);
+
+        virtual void handleControlPacket(ControlPacket* cp);
+
+        int join(GameAdvertisement* ad);
+
+        int spectate(GameAdvertisement* ad);
+    };
+
+    class GameStateManager : public CodalComponent
+    {
+        GameEngine& engine;
+        PktArcadeHost* host;
+        PktArcadePlayer* players;
+
+        uint32_t serial_number;
+
+        int clearList(PktArcadeDevice** list);
+        int addToList(PktArcadeDevice** list, PktArcadeDevice* item);
+
+        public:
+        GameStateManager(GameEngine& ge, uint32_t serial, uint16_t id = DEVICE_ID_PKT_GAME_STATE_DRIVER);
+
+        int addPlayer(PktDevice d);
+
+        int addSpectator(PktDevice d);
+
+        int hostGame();
+
+        int listGames();
+
+        int joinGame(ManagedString name);
+
+        void processPacket(PktSerialPkt* pkt);
+
+        friend class PktArcadePlayer;
+        friend class PktArcadeHost;
     };
 }
 
