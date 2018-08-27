@@ -24,7 +24,6 @@ GameAdvertListItem* PktArcadeHost::getGamesList()
 // this will only be called if local, which is brilliant -- single driver multiple uses.
 int PktArcadeHost::queueControlPacket()
 {
-    PKT_DMESG("QUEUED CUSTOM CP");
     ControlPacket cp;
     memset(&cp, 0, sizeof(ControlPacket));
 
@@ -42,6 +41,7 @@ int PktArcadeHost::queueControlPacket()
 
     advert->max_players = manager.engine.getMaxPlayers();
     advert->slots_available = manager.engine.getAvailableSlots();
+    advert->game_id = manager.engine.getIdentifier();
 
     ManagedString name = manager.engine.getName();
     memcpy(advert->game_name, name.toCharArray(), min(name.length(), GAME_STATE_NAME_SIZE));
@@ -75,6 +75,7 @@ PktArcadeHost::~PktArcadeHost()
 
 void PktArcadeHost::handleControlPacket(ControlPacket* cp)
 {
+    DMESG("CTRL");
     GameAdvertisement* advert = (GameAdvertisement*)cp->data;
 
     // we're advertising and are receiving a join request.                                          we need probably a less intensive way of verifying a join
@@ -118,12 +119,12 @@ void PktArcadeHost::handleControlPacket(ControlPacket* cp)
             gameListItem = gameListItem->next;
         }
 
-        GameAdvertisement* advert = (GameAdvertisement *)malloc(sizeof(GameAdvertisement));
-        memcpy(advert, advert, sizeof(GameAdvertisement));
+        GameAdvertisement* newAd = (GameAdvertisement *)malloc(sizeof(GameAdvertisement));
+        memcpy(newAd, advert, sizeof(GameAdvertisement));
 
         GameAdvertListItem* gali = (GameAdvertListItem *)malloc(sizeof(GameAdvertListItem));
         gali->serial_number = cp->serial_number;
-        gali->item = advert;
+        gali->item = newAd;
         gali->next = NULL;
 
         if (games == NULL)
