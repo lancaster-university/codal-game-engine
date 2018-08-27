@@ -144,11 +144,7 @@ void GameEngine::update(Event)
                 continue;
 
             if (sprites[i]->body.intersectsWith(sprites[j]->body))
-            {
-                DMESG("COLLISION: %p %p", &sprites[j]->body, &sprites[i]->body);
                 sprites[i]->body.collideWith(sprites[j]->body);
-                // sprites[j]->body.collideWith(sprites[i]->body);
-            }
         }
     }
 
