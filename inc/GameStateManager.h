@@ -209,17 +209,21 @@ namespace codal
          * listGames() creates a host, but in sniffing mode. All advertisements are captured, and added to a list of GameAdvertListItems, after 500 ms the thread will be woken up.
          *
          * @returns a list of GameAdvertListItems. NULL if no games are found.
+         *
+         * @note beginning to host a game or join a game will invalidate this list (it will be free'd)
          **/
         GameAdvertListItem* listGames();
 
         /**
          * Joins a game based on the name of the game
          *
-         * @param name the name of the game to join.
+         * @param advert the advert of the game to join. A list of adverts can be obtained from the listGames member function.
          *
          * @returns DEVICE_OK on success, DEVICE_CANCELLED if not listing games, DEVICE_NO_RESOURCES if a game is not found
+         *
+         * @note beginning to host a game or join a game will invalidate this list (it will be free'd)
          **/
-        int joinGame(ManagedString name);
+        int joinGame(GameAdvertisement* advert);
 
         /**
          * Any player or host that receives data will pass the received packet to this class where it can be disseminated into game state.

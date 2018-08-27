@@ -91,33 +91,13 @@ int GameStateManager::addSpectator(PktDevice player)
     return addToList((PktArcadeDevice**)&players, new PktArcadePlayer(player, 0, *this));
 }
 
-int GameStateManager::joinGame(ManagedString name)
+int GameStateManager::joinGame(GameAdvertisement* advert)
 {
     if (!(status & GAME_STATE_STATUS_LISTING_GAMES) || host == NULL)
         return DEVICE_CANCELLED;
 
-    GameAdvertListItem* advert = host->getGamesList();
-    GameAdvertisement* game = NULL;
-
-    // walk the list of games, comparing the names, if match is found set game pointer
-    while(advert)
-    {
-        if (name == ManagedString((char *)advert->item->game_name))
-        {
-            game = advert->item;
-            break;
-        }
-
-        advert = advert->next;
-    }
-
-    // no match -- game gone?
-    if (game == NULL)
-        return DEVICE_NO_RESOURCES;
-
-    // we have a match
     // take a local copy of the ad before we delete current host
-    GameAdvertisement ad = *game;
+    GameAdvertisement ad = *advert;
     uint32_t serial = advert->serial_number;
 
     // create a remote host, delete current host (will include the deletion of the games list)
