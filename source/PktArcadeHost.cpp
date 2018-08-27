@@ -107,6 +107,17 @@ void PktArcadeHost::handleControlPacket(ControlPacket* cp)
     // if we're a host in broadcast mode, the user is looking for games.
     if (cp->packet_type == GS_CONTROL_PKT_TYPE_ADVERTISEMENT && device.flags & PKT_DEVICE_FLAGS_BROADCAST)
     {
+        GameAdvertListItem* gameListItem = games;
+
+        while(gameListItem)
+        {
+            // don't add duplicates.
+            if (gameListItem->serial_number == cp->serial_number && gameListItem->item->game_id == advert->game_id)
+                return;
+
+            gameListItem = gameListItem->next;
+        }
+
         GameAdvertisement* advert = (GameAdvertisement *)malloc(sizeof(GameAdvertisement));
         memcpy(advert, advert, sizeof(GameAdvertisement));
 
