@@ -100,6 +100,9 @@ namespace codal
         {
             playerNumber = playerNumber;
             next = NULL;
+
+            if (PktSerialProtocol::instance)
+                PktSerialProtocol::instance->add(*this);
         }
 
         virtual void handleControlPacket(ControlPacket* cp) {}
@@ -223,7 +226,7 @@ namespace codal
          *
          * @note beginning to host a game or join a game will invalidate this list (it will be free'd)
          **/
-        int joinGame(GameAdvertisement* advert);
+        int joinGame(GameAdvertListItem* advert);
 
         /**
          * Any player or host that receives data will pass the received packet to this class where it can be disseminated into game state.

@@ -4,7 +4,6 @@
 
 using namespace codal;
 
-
 int GameStateManager::clearList(PktArcadeDevice** list)
 {
     PktArcadeDevice* head = *list;
@@ -56,13 +55,17 @@ GameStateManager::GameStateManager(GameEngine& ge, uint32_t serial, uint16_t id)
 int GameStateManager::hostGame()
 {
     if (status & GAME_STATE_STATUS_LISTING_GAMES)
-        status &= ~(GAME_STATE_STATUS_LISTING_GAMES);
+        status &= (GAME_STATE_STATUS_LISTING_GAMES);
 
-    // clean host list, there should only ever be one, but lets future proof code just in case.
-    clearList((PktArcadeDevice**)&host);
-    addToList((PktArcadeDevice**)&host, new PktArcadeHost(PktDevice(0, 0, PKT_DEVICE_FLAGS_LOCAL, this->serial_number), 0, *this));
+    if (!(status & GAME_STATE_STATUS_ADVERTISING))
+    {
+        // clean host list, there should only ever be one, but lets future proof code just in case.
+        clearList((PktArcadeDevice**)&host);
+        addToList((PktArcadeDevice**)&host, new PktArcadeHost(PktDevice(0, 0, PKT_DEVICE_FLAGS_LOCAL, this->serial_number), 0, *this));
 
-    this->status |= GAME_STATE_STATUS_ADVERTISING;
+        this->status |= GAME_STATE_STATUS_ADVERTISING;
+    }
+
     return DEVICE_OK;
 }
 
@@ -71,12 +74,17 @@ GameAdvertListItem* GameStateManager::listGames()
     if (status & GAME_STATE_STATUS_ADVERTISING)
         status &= ~(GAME_STATE_STATUS_ADVERTISING);
 
-    // clean host list, there should only ever be one, but lets future proof code just in case.
-    clearList((PktArcadeDevice**)&host);
-    // sniff all packets by becoming a remote host in broadcast mode (addressing is done by class rather than device address).
-    addToList((PktArcadeDevice**)&host, new PktArcadeHost(PktDevice(0, 0, PKT_DEVICE_FLAGS_REMOTE | PKT_DEVICE_FLAGS_BROADCAST, this->serial_number), 0, *this));
+    if (!(status & GAME_STATE_STATUS_LISTING_GAMES))
+    {
+        // clean host list, there should only ever be one, but lets future proof code just in case.
+        DMESG("CLEAR");
+        clearList((PktArcadeDevice**)&host);
+        DMESG("ADD");
+        // sniff all packets by becoming a remote host in broadcast mode (addressing is done by class rather than device address).
+        addToList((PktArcadeDevice**)&host, new PktArcadeHost(PktDevice(0, 0, PKT_DEVICE_FLAGS_REMOTE | PKT_DEVICE_FLAGS_BROADCAST, this->serial_number), 0, *this));
 
-    this->status |= GAME_STATE_STATUS_LISTING_GAMES;
+        this->status |= GAME_STATE_STATUS_LISTING_GAMES;
+    }
 
     return host->getGamesList();
 }
@@ -91,13 +99,13 @@ int GameStateManager::addSpectator(PktDevice player)
     return addToList((PktArcadeDevice**)&players, new PktArcadePlayer(player, 0, *this));
 }
 
-int GameStateManager::joinGame(GameAdvertisement* advert)
+int GameStateManager::joinGame(GameAdvertListItem* advert)
 {
     if (!(status & GAME_STATE_STATUS_LISTING_GAMES) || host == NULL)
         return DEVICE_CANCELLED;
 
     // take a local copy of the ad before we delete current host
-    GameAdvertisement ad = *advert;
+    GameAdvertisement ad = *(advert->item);
     uint32_t serial = advert->serial_number;
 
     // create a remote host, delete current host (will include the deletion of the games list)
