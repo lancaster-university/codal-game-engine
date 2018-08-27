@@ -66,7 +66,7 @@ int GameStateManager::hostGame()
     return DEVICE_OK;
 }
 
-int GameStateManager::listGames()
+GameAdvertListItem* GameStateManager::listGames()
 {
     if (status & GAME_STATE_STATUS_ADVERTISING)
         status &= ~(GAME_STATE_STATUS_ADVERTISING);
@@ -77,7 +77,8 @@ int GameStateManager::listGames()
     addToList((PktArcadeDevice**)&host, new PktArcadeHost(PktDevice(0, 0, PKT_DEVICE_FLAGS_REMOTE | PKT_DEVICE_FLAGS_BROADCAST, this->serial_number), 0, *this));
 
     this->status |= GAME_STATE_STATUS_LISTING_GAMES;
-    return DEVICE_OK;
+
+    return host->getGamesList();
 }
 
 int GameStateManager::addPlayer(PktDevice player)

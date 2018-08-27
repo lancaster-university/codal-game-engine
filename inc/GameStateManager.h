@@ -137,30 +137,95 @@ namespace codal
         int spectate(GameAdvertisement* ad);
     };
 
+    /**
+     * This class manages new players, detecting and joining hosts, and the synchronisation of game state.
+     * It has a reference to the currently running game.
+     **/
     class GameStateManager : public CodalComponent
     {
-        GameEngine& engine;
-        PktArcadeHost* host;
-        PktArcadePlayer* players;
+        GameEngine& engine; // the game that this class is managing.
+        PktArcadeHost* host; // the list of connected hosts (should only ever be one.)
+        PktArcadePlayer* players; // the list of connected players.
 
-        uint32_t serial_number;
+        uint32_t serial_number; // the serial number to use when advertising or joining a game.
 
+        /**
+         * Walks the given list, deleting entries, finally nullifying the list at the end.
+         *
+         * @param list the list to walk
+         *
+         * @returns DEVICE_OK on success.
+         **/
         int clearList(PktArcadeDevice** list);
+
+        /**
+         * Walks to the end of the given list and adds the item.
+         *
+         * @param list the list to walk
+         *
+         * @param the item to add
+         *
+         * @returns DEVICE_OK on success.
+         **/
         int addToList(PktArcadeDevice** list, PktArcadeDevice* item);
 
         public:
+
+        /**
+         * Constructor
+         *
+         * @param ge the game engine to manage
+         *
+         * @param serial the serial number (identifier) to use when advertising or joining a game.
+         **/
         GameStateManager(GameEngine& ge, uint32_t serial, uint16_t id = DEVICE_ID_PKT_GAME_STATE_DRIVER);
 
+        /**
+         * Adds a player to the player list.
+         *
+         * @param d the device information for the new player.
+         *
+         * @returns DEVICE_OK on success
+         **/
         int addPlayer(PktDevice d);
 
+        /**
+         * Adds a spectator to the player list.
+         *
+         * @param d the device information for the new player.
+         *
+         * @returns DEVICE_OK on success
+         **/
         int addSpectator(PktDevice d);
 
+        /**
+         * Games are shared by calling hostGame(), this creates a game host, and begins advertising using data from engine.
+         *
+         * @returns DEVICE_OK on success.
+         **/
         int hostGame();
 
-        int listGames();
+        /**
+         * listGames() creates a host, but in sniffing mode. All advertisements are captured, and added to a list of GameAdvertListItems, after 500 ms the thread will be woken up.
+         *
+         * @returns a list of GameAdvertListItems. NULL if no games are found.
+         **/
+        GameAdvertListItem* listGames();
 
+        /**
+         * Joins a game based on the name of the game
+         *
+         * @param name the name of the game to join.
+         *
+         * @returns DEVICE_OK on success, DEVICE_CANCELLED if not listing games, DEVICE_NO_RESOURCES if a game is not found
+         **/
         int joinGame(ManagedString name);
 
+        /**
+         * Any player or host that receives data will pass the received packet to this class where it can be disseminated into game state.
+         *
+         * @param name the name of the game to join.
+         **/
         void processPacket(PktSerialPkt* pkt);
 
         friend class PktArcadePlayer;
