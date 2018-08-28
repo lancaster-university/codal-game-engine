@@ -34,13 +34,22 @@
 #define PKT_ARCADE_EVT_PLAYER_JOIN_RESULT           2
 #define PKT_ARCADE_PLAYER_STATUS_JOIN_SUCCESS       0x02
 
+#define GAME_STATE_PKT_TYPE_INITIAL_SPRITE_DATA     1
+#define GAME_STATE_PKT_TYPE_MOVING_SPRITE_DATA      2
+#define GAME_STATE_PKT_TYPE_COLLISION               3
+
+#define GAME_STATE_PKT_FLAG_START                   0x01 // indicates the start of a stream of packets
+#define GAME_STATE_PKT_FLAG_END                     0x02 // indicates that this is the last of a stream of packets
+
+#define GAME_STATE_PKT_DATA_SIZE                    30
+
 namespace codal
 {
     struct GameStatePacket
     {
-        uint8_t type;
+        uint8_t type:4, flags:4;
         uint8_t owner;
-        uint8_t data[30];
+        uint8_t data[GAME_STATE_PKT_DATA_SIZE];
     };
 
     struct InitialSpriteData
@@ -50,7 +59,7 @@ namespace codal
         int16_t y;
     };
 
-    struct InProgressSpriteData
+    struct MovingSpriteData
     {
         uint16_t sprite_id;     // the id of a sprite
         int16_t x;
@@ -122,6 +131,8 @@ namespace codal
         virtual void handleControlPacket(ControlPacket* cp);
 
         GameAdvertListItem* getGamesList();
+
+        void sendState(Event);
 
         ~PktArcadeHost();
     };

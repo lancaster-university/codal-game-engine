@@ -16,10 +16,10 @@ namespace codal
         int startX;
         int startY;
 
+        uint16_t variableHash;
+
         public:
         PhysicsBody& body;
-
-        uint16_t variableHash;
 
         Sprite(ManagedString name, PhysicsBody& body, Image& i);
 
@@ -36,6 +36,16 @@ namespace codal
         int drawCircle(uint16_t x, uint16_t y, int radius, int colour);
 
         void draw(Image& i);
+
+        uint16_t getHash();
+
+        int setX(int x);
+
+        int setY(int y);
+
+        int getX();
+
+        int getY();
     };
 }
 

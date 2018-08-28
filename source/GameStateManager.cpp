@@ -125,4 +125,28 @@ int GameStateManager::joinGame(GameAdvertListItem* advert)
 void GameStateManager::processPacket(PktSerialPkt* p)
 {
     // do some stuff with the packet...
+    GameStatePacket* gsp = (GameStatePacket *)p->data;
+
+    if (gsp->type = GAME_STATE_PKT_TYPE_INITIAL_SPRITE_DATA)
+    {
+        int spritesPerPacket = GAME_STATE_PKT_DATA_SIZE / sizeof(InitialSpriteData);
+
+        InitialSpriteData* isd = (InitialSpriteData *)gsp->data;
+        for (int i = 0; i < spritesPerPacket; i++)
+        {
+            for (int j = 0; j < GAME_ENGINE_MAX_SPRITES; j++)
+            {
+                // an empty sprite requires no action.
+                if (engine.sprites[j] == NULL)
+                    continue;
+
+                // if match perform state sync.
+                if (engine.sprites[j]->getHash() == isd[i].sprite_id)
+                {
+                    engine.sprites[j]->setX(isd[i].x);
+                    engine.sprites[j]->setY(isd[i].y);
+                }
+            }
+        }
+    }
 }

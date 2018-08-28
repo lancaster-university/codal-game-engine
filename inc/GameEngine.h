@@ -26,10 +26,9 @@ namespace codal
 
         ManagedString name;
 
-        protected:
+        public:
         Sprite* sprites[GAME_ENGINE_MAX_SPRITES];
 
-        public:
         GameEngine(Image& displayBuffer, ManagedString gameName, uint32_t identifier, int maxPlayers = 1, uint16_t id = DEVICE_ID_GAME_ENGINE);
 
         uint32_t getIdentifier();
@@ -51,6 +50,8 @@ namespace codal
         int remove(Sprite& s);
 
         void update(Event);
+
+        friend class GameStateManager;
     };
 }
 

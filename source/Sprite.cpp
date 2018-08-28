@@ -20,6 +20,33 @@ Sprite::Sprite(ManagedString name, PhysicsBody& body, Image& i) : body(body)
     this->startY = body.position.y;
 }
 
+uint16_t Sprite::getHash()
+{
+    return this->variableHash;
+}
+
+int Sprite::setX(int x)
+{
+    body.position.x = x;
+    return DEVICE_OK;
+}
+
+int Sprite::setY(int y)
+{
+    body.position.y = y;
+    return DEVICE_OK;
+}
+
+int Sprite::getX()
+{
+    return body.position.x;
+}
+
+int Sprite::getY()
+{
+    return body.position.y;
+}
+
 int Sprite::reset()
 {
     body.position.x = this->startX;
@@ -63,57 +90,6 @@ int Sprite::drawRectangle(uint16_t x, uint16_t y, int width, int height, int col
         fill(colour);
         return DEVICE_OK;
     }
-
-    // auto bh = image.byteHeight();
-    // uint8_t f = image.fillMask(c);
-
-    // uint8_t *p = image.pix(x, y);
-    // while (w-- > 0) {
-    //     if (image.bpp() == 1) {
-    //         auto ptr = p;
-    //         unsigned mask = 0x01 << (y & 7);
-
-    //         for (int i = 0; i < h; ++i) {
-    //             if (mask == 0x100) {
-    //                 if (h - i >= 8) {
-    //                     *++ptr = f;
-    //                     i += 7;
-    //                     continue;
-    //                 } else {
-    //                     mask = 0x01;
-    //                     ++ptr;
-    //                 }
-    //             }
-    //             if (c)
-    //                 *ptr |= mask;
-    //             else
-    //                 *ptr &= ~mask;
-    //             mask <<= 1;
-    //         }
-
-    //     } else if (image.bpp() == 4) {
-    //         auto ptr = p;
-    //         unsigned mask = 0x0f;
-    //         if (y & 1)
-    //             mask <<= 4;
-
-    //         for (int i = 0; i < h; ++i) {
-    //             if (mask == 0xf00) {
-    //                 if (h - i >= 2) {
-    //                     *++ptr = f;
-    //                     i++;
-    //                     continue;
-    //                 } else {
-    //                     mask = 0x0f;
-    //                     ptr++;
-    //                 }
-    //             }
-    //             *ptr = (*ptr & ~mask) | (f & mask);
-    //             mask <<= 4;
-    //         }
-    //     }
-    //     p += bh;
-    // }
 
     return DEVICE_OK;
 }

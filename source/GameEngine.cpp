@@ -11,7 +11,7 @@ GameEngine::GameEngine(Image& displayBuffer, ManagedString gameName, uint32_t id
     DMESG("GE CONS");
     memset(sprites, 0, GAME_ENGINE_MAX_SPRITES * sizeof(Sprite*));
 
-    system_timer_event_every(4, id, GAME_ENGINE_EVT_UPDATE);
+    // system_timer_event_every(4, id, GAME_ENGINE_EVT_UPDATE);
 
     this->status = GAME_ENGINE_STATUS_STOPPED;
 

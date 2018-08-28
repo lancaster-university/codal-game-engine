@@ -13,6 +13,9 @@ PktArcadeHost::PktArcadeHost(PktDevice d, uint8_t playerNumber, GameStateManager
                PktArcadeDevice(d, playerNumber, manager, DEVICE_ID_PKT_ARCADE_HOST)
 {
     games = NULL;
+
+    if (EventModel::defaultEventBus)
+        EventModel::defaultEventBus->listen(this->id, GS_EVENT_SEND_GAME_STATE, this, &PktArcadeHost::sendState);
 }
 
 GameAdvertListItem* PktArcadeHost::getGamesList()
@@ -97,6 +100,9 @@ void PktArcadeHost::handleControlPacket(ControlPacket* cp)
             cp->flags |= GS_CONTROL_FLAG_JOIN_ACK;
 
             PktSerialProtocol::send((uint8_t *)&cp, sizeof(ControlPacket), 0);
+
+            // communicate the game state in a little while.
+            Event(DEVICE_ID_PKT_ARCADE_HOST, GS_EVENT_SEND_GAME_STATE);
         }
         else if (cp->flags & GS_CONTROL_FLAG_SPECTATE)
         {
@@ -137,6 +143,54 @@ void PktArcadeHost::handleControlPacket(ControlPacket* cp)
                 iterator = iterator->next;
 
             iterator->next = gali;
+        }
+    }
+}
+
+void PktArcadeHost::sendState(Event)
+{
+    int spritesPerPacket = GAME_STATE_PKT_DATA_SIZE / sizeof(InitialSpriteData);
+
+    GameStatePacket gsp;
+    gsp.type = GAME_STATE_PKT_TYPE_INITIAL_SPRITE_DATA; // lets just get inital sprite data working.
+    gsp.owner = 0; // we're the owner...
+    gsp.flags = 0; // 0 for now
+
+    InitialSpriteData isd;
+
+    int spriteCount = 0;
+    uint8_t* dataPointer = gsp.data;
+
+    for (int i = 0; i < GAME_ENGINE_MAX_SPRITES; i++)
+    {
+        // an empty sprite requires no action.
+        if (manager.engine.sprites[i] == NULL)
+            continue;
+
+        // fill out the initial sprite data struct.
+        isd.sprite_id = manager.engine.sprites[i]->getHash();
+        isd.x = manager.engine.sprites[i]->getX();
+        isd.y = manager.engine.sprites[i]->getY();
+
+        // copy the struct into the game state packet.
+        memcpy(dataPointer, &isd, sizeof(InitialSpriteData));
+        dataPointer += sizeof(InitialSpriteData);
+        spriteCount++;
+
+        // if the packet is full, send packet and reset spriteCount.
+        if (spriteCount == spritesPerPacket)
+        {
+            // queue for sending, and reset count
+            int ret = PktSerialProtocol::send((uint8_t*)&gsp, sizeof(GameStatePacket), this->device.address);
+
+            // queue full, sleep a lil.
+            if (ret != DEVICE_OK)
+            {
+                fiber_sleep(10);
+                PktSerialProtocol::send((uint8_t*)&gsp, sizeof(GameStatePacket), this->device.address);
+            }
+
+            spriteCount = 0;
         }
     }
 }
