@@ -7,13 +7,12 @@ using namespace codal;
 
 int SimplePhysicsBody::gravity = 1;
 
-SimplePhysicsBody::SimplePhysicsBody(int16_t x, int16_t y, int16_t z, int width, int height) : PhysicsBody(x, y, z, width, height)
+SimplePhysicsBody::SimplePhysicsBody(int16_t x, int16_t y, int16_t z, Image& i) : PhysicsBody(x, y, z, i.getWidth(), i.getHeight())
 {
     velocity.x = 0.0;
     velocity.y = 0.0;
 
     restitution = 0.1;
-    // inverse_mass = 1.0;
     inverse_mass = 1.0 / 100.0;
     setPosition(x,y);
 }

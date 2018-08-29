@@ -12,8 +12,9 @@ int Sprite::fill(uint8_t colour)
 }
 
 
-Sprite::Sprite(ManagedString name, PhysicsBody& body, Image& i) : body(body)
+Sprite::Sprite(ManagedString name, PhysicsBody& body, Image& i, uint8_t owner) : body(body)
 {
+    this->owner = owner;
     this->variableHash = PearsonHash::hash16(name);
     this->image = i;
     this->startX = body.position.x;
