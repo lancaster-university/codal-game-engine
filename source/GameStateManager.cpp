@@ -100,7 +100,7 @@ int GameStateManager::hostGame()
     {
         // clean host list, there should only ever be one, but lets future proof code just in case.
         clearHostList();
-        addHostToList(new PktArcadeHost(PktDevice(0, 0, PKT_DEVICE_FLAGS_LOCAL | PKT_DEVICE_FLAGS_BROADCAST, this->serial_number), 1, *this));
+        addHostToList(new PktArcadeHost(PktDevice(0, 0, PKT_DEVICE_FLAGS_LOCAL | PKT_DEVICE_FLAGS_BROADCAST, this->serial_number), 0, *this));
 
         this->status |= GAME_STATE_STATUS_ADVERTISING;
     }
@@ -228,7 +228,8 @@ int GameStateManager::joinGame(GameAdvertListItem* advert)
 
     // create a remote host, delete current host (will include the deletion of the games list)
     clearHostList();
-    addHostToList(new PktArcadeHost(PktDevice(0, 0, PKT_DEVICE_FLAGS_REMOTE, serial), 1, *this));
+    // host is always player one (0)
+    addHostToList(new PktArcadeHost(PktDevice(0, 0, PKT_DEVICE_FLAGS_REMOTE, serial), 0, *this));
 
     // create ourselves as a local driver
     clearPlayerList();

@@ -25,11 +25,8 @@ void PktArcadePlayer::handleControlPacket(ControlPacket* cp)
                 this->playerNumber = advert->playerNumber;
                 Player::playerNumber = advert->playerNumber;
 
-                // todo: resolve indexing woes of sprite arrays vs. events
-                // events probably aren't the best way, especially after we scale up the number of sprites...
-
                 if (EventModel::defaultEventBus)
-                    EventModel::defaultEventBus->listen(DEVICE_ID_PLAYER_SPRITE, this->playerNumber, (PktArcadeDevice*)this, &PktArcadeDevice::updateSprite, MESSAGE_BUS_LISTENER_IMMEDIATE);
+                    EventModel::defaultEventBus->listen(DEVICE_ID_PLAYER_SPRITE, PLAYER_SPRITE_EVT_BASE + this->playerNumber, (PktArcadeDevice*)this, &PktArcadeDevice::updateSprite, MESSAGE_BUS_LISTENER_IMMEDIATE);
 
                 status |= PKT_ARCADE_PLAYER_STATUS_JOIN_SUCCESS;
                 Event(DEVICE_ID_NOTIFY_ONE, PKT_ARCADE_EVT_PLAYER_JOIN_RESULT);

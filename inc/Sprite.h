@@ -22,7 +22,7 @@ namespace codal
         uint8_t owner;
         PhysicsBody& body;
 
-        Sprite(ManagedString name, PhysicsBody& body, Image& i, uint8_t owner = 1);
+        Sprite(ManagedString name, PhysicsBody& body, Image& i, uint8_t owner = 0);
 
         int reset();
 

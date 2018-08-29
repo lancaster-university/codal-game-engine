@@ -4,37 +4,6 @@
 
 using namespace codal;
 
-void PktArcadeDevice::updateSprite(Event)
-{
-    if (GameEngine::instance)
-    {
-        Sprite* sprite = GameEngine::instance->playerSprites[this->playerNumber + 1];
-
-        GameStatePacket gsp;
-        gsp.type = GAME_STATE_PKT_TYPE_INITIAL_SPRITE_DATA; // lets just get inital sprite data working.
-        gsp.owner = this->playerNumber; // we're the owner...
-        gsp.count = 1; // 0 for now
-
-        InitialSpriteData isd;
-
-        // fill out the initial sprite data struct.
-        isd.owner = sprite->owner;
-        isd.sprite_id = sprite->getHash();
-        isd.x = sprite->getX();
-        isd.y = sprite->getY();
-
-        // copy the struct into the game state packet.
-        memcpy(gsp.data, &isd, sizeof(InitialSpriteData));
-
-        PktSerialProtocol::send((uint8_t*)&gsp, sizeof(GameStatePacket), this->device.address);
-    }
-}
-
-void PktArcadeDevice::handlePacket(PktSerialPkt* p)
-{
-    manager.processPacket(p);
-}
-
 PktArcadeHost::PktArcadeHost(PktDevice d, uint8_t playerNumber, GameStateManager& manager) :
                PktArcadeDevice(d, playerNumber, manager, DEVICE_ID_PKT_ARCADE_HOST)
 {
@@ -42,11 +11,11 @@ PktArcadeHost::PktArcadeHost(PktDevice d, uint8_t playerNumber, GameStateManager
 
     // we are always in charge of player 0.
     if (device.flags & PKT_DEVICE_FLAGS_LOCAL)
-        Player::playerNumber = 1;
+        Player::playerNumber = 0;
 
     if (EventModel::defaultEventBus)
     {
-        EventModel::defaultEventBus->listen(DEVICE_ID_PLAYER_SPRITE, this->playerNumber, (PktArcadeDevice*)this, &PktArcadeDevice::updateSprite, MESSAGE_BUS_LISTENER_IMMEDIATE);
+        EventModel::defaultEventBus->listen(DEVICE_ID_PLAYER_SPRITE, PLAYER_SPRITE_EVT_BASE + this->playerNumber, (PktArcadeDevice*)this, &PktArcadeDevice::updateSprite, MESSAGE_BUS_LISTENER_IMMEDIATE);
         EventModel::defaultEventBus->listen(this->id, GS_EVENT_SEND_GAME_STATE, this, &PktArcadeHost::sendState);
     }
 }
@@ -60,6 +29,7 @@ GameAdvertListItem* PktArcadeHost::getGamesList()
 // this will only be called if local, which is brilliant -- single driver multiple uses.
 int PktArcadeHost::queueControlPacket()
 {
+    DMESG("HOST: addr %d flags %d sn %d",device.address, device.flags, device.serial_number);
     ControlPacket cp;
     memset(&cp, 0, sizeof(ControlPacket));
 
@@ -135,7 +105,8 @@ void PktArcadeHost::handleControlPacket(ControlPacket* cp)
         if (avail > 0 && (cp->flags & GS_CONTROL_FLAG_PLAY))
         {
             // communicate game state
-            uint8_t playerNo = max - avail + 1;
+            uint8_t playerNo = max - (max - avail);
+            DMESG("CPlayerNo: %d", playerNo);
             manager.addPlayer(d, playerNo);
             advert->playerNumber = playerNo;
             cp->flags |= GS_CONTROL_FLAG_JOIN_ACK;
