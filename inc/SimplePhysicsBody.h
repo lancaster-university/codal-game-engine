@@ -3,6 +3,7 @@
 
 #include "PhysicsBody.h"
 #include "cute_c2.h"
+#include "Image.h"
 
 namespace codal
 {
@@ -19,7 +20,7 @@ namespace codal
 
         c2AABB rect;
 
-        SimplePhysicsBody(int16_t x, int16_t y, int16_t z, Image& i);
+        SimplePhysicsBody(int16_t x, int16_t y, int16_t z, Image& image);
 
         void setPosition(int x, int y);
 
