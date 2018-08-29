@@ -64,10 +64,11 @@ namespace codal
 
     struct InitialSpriteData
     {
+        uint8_t owner;
         uint16_t sprite_id;     // the id of a sprite
         int16_t x;
         int16_t y;
-    };
+    } __attribute((__packed__));
 
     struct MovingSpriteData
     {
@@ -132,6 +133,8 @@ namespace codal
     class PktArcadeHost : public PktArcadeDevice
     {
         GameAdvertListItem* games;
+
+        void safeSend(uint8_t* data, int len);
 
         public:
         PktArcadeHost(PktDevice d, uint8_t playerNumber, GameStateManager& manager);
