@@ -78,8 +78,9 @@ PktArcadeHost::~PktArcadeHost()
 
 void PktArcadeHost::handleControlPacket(ControlPacket* cp)
 {
-    DMESG("CTRL");
     GameAdvertisement* advert = (GameAdvertisement*)cp->data;
+
+    DMESG("CTRL t: %d", cp->packet_type);
 
     // we're advertising and are receiving a join request.                                          we need probably a less intensive way of verifying a join
     if (cp->packet_type == GS_CONTROL_PKT_TYPE_JOIN && advert->game_id == manager.engine.getIdentifier() && ManagedString((char *)advert->game_name) == manager.engine.getName())
@@ -91,15 +92,14 @@ void PktArcadeHost::handleControlPacket(ControlPacket* cp)
         d.rolling_counter = 0;
         d.serial_number = cp->serial_number;
 
+        DMESG("PLAYER: %d %d",d.address,d.serial_number);
         // if we have a player slot available and the arcade has requested to play...
         // if arcade has requested to spectate and we allow spectate mode
-        if ((manager.engine.getAvailableSlots() > 0 && cp->flags & GS_CONTROL_FLAG_PLAY))
+        if (/*manager.engine.getAvailableSlots() > 0 &&*/ (cp->flags & GS_CONTROL_FLAG_PLAY))
         {
             // communicate game state
             manager.addPlayer(d);
             cp->flags |= GS_CONTROL_FLAG_JOIN_ACK;
-
-            PktSerialProtocol::send((uint8_t *)&cp, sizeof(ControlPacket), 0);
 
             // communicate the game state in a little while.
             Event(DEVICE_ID_PKT_ARCADE_HOST, GS_EVENT_SEND_GAME_STATE);
@@ -109,11 +109,16 @@ void PktArcadeHost::handleControlPacket(ControlPacket* cp)
             manager.addSpectator(d);
             cp->flags |= GS_CONTROL_FLAG_JOIN_ACK;
         }
+
+        PktSerialProtocol::send((uint8_t *)cp, sizeof(ControlPacket), 0);
+        return;
     }
 
     // if we're a host in broadcast mode, the user is looking for games.
     if (cp->packet_type == GS_CONTROL_PKT_TYPE_ADVERTISEMENT && device.flags & PKT_DEVICE_FLAGS_BROADCAST)
     {
+        DMESG("ADVERT");
+
         GameAdvertListItem* gameListItem = games;
 
         while(gameListItem)
@@ -147,8 +152,21 @@ void PktArcadeHost::handleControlPacket(ControlPacket* cp)
     }
 }
 
+int PktArcadeHost::deviceConnected(PktDevice d)
+{
+    PktSerialDriver::deviceConnected(d);
+    manager.hostConnectionChange(this, true);
+}
+
+int PktArcadeHost::deviceRemoved()
+{
+    PktSerialDriver::deviceRemoved();
+    manager.hostConnectionChange(this, false);
+}
+
 void PktArcadeHost::sendState(Event)
 {
+    DMESG("SEND SPRITES");
     int spritesPerPacket = GAME_STATE_PKT_DATA_SIZE / sizeof(InitialSpriteData);
 
     GameStatePacket gsp;
@@ -159,6 +177,7 @@ void PktArcadeHost::sendState(Event)
     InitialSpriteData isd;
 
     int spriteCount = 0;
+    int packetCount = 0;
     uint8_t* dataPointer = gsp.data;
 
     for (int i = 0; i < GAME_ENGINE_MAX_SPRITES; i++)
@@ -191,6 +210,25 @@ void PktArcadeHost::sendState(Event)
             }
 
             spriteCount = 0;
+            packetCount++;
         }
     }
+
+    if (spriteCount != 0)
+    {
+        // queue for sending, and reset count
+        int ret = PktSerialProtocol::send((uint8_t*)&gsp, sizeof(GameStatePacket), this->device.address);
+
+        // queue full, sleep a lil.
+        if (ret != DEVICE_OK)
+        {
+            fiber_sleep(10);
+            PktSerialProtocol::send((uint8_t*)&gsp, sizeof(GameStatePacket), this->device.address);
+        }
+
+        spriteCount = 0;
+        packetCount++;
+    }
+
+    DMESG("END SEND SPRITES %d", packetCount);
 }
