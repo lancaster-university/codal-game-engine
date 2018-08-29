@@ -4,6 +4,7 @@
 #include "PktSerialProtocol.h"
 #include "ManagedString.h"
 #include "GameEngine.h"
+#include "Player.h"
 
 #define GS_CONTROL_PKT_TYPE_ADVERTISEMENT           0x02
 // flags mean something different in a advert packet
@@ -57,7 +58,7 @@ namespace codal
 {
     struct GameStatePacket
     {
-        uint8_t type:4, flags:4;
+        uint8_t type:4, count:4;
         uint8_t owner;
         uint8_t data[GAME_STATE_PKT_DATA_SIZE];
     };
@@ -94,7 +95,7 @@ namespace codal
     {
         uint32_t game_id;           // used to identify different games
         uint8_t slots_available;    // the availability of the player slots in the game, (0 == no player slots available)
-        uint8_t max_players;        // slots_available
+        uint8_t playerNumber;       // zero until join response from host
         uint8_t game_name[GAME_STATE_NAME_SIZE + 1];      // a textual name, must include null terminator (therefore 13 chars for a name)
     };
 
@@ -124,6 +125,8 @@ namespace codal
             if (PktSerialProtocol::instance)
                 PktSerialProtocol::instance->add(*this);
         }
+
+        virtual void updateSprite(Event);
 
         virtual void handleControlPacket(ControlPacket* cp) {}
 
@@ -254,7 +257,7 @@ namespace codal
         void hostConnectionChange(PktArcadeHost* hostDevice, bool connected);
 
         // makes a player instance and adds it to the internal list
-        int addPlayer(PktDevice player);
+        int addPlayer(PktDevice player, uint8_t playerNumber);
 
         // makes a player instance and adds it to the internal list
         int addSpectator(PktDevice player);
@@ -305,6 +308,8 @@ namespace codal
         void processPacket(PktSerialPkt* pkt);
 
         //
+
+        void localUpdate(Event);
 
         friend class PktArcadePlayer;
         friend class PktArcadeHost;

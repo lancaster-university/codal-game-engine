@@ -4,6 +4,32 @@
 
 using namespace codal;
 
+void PktArcadeDevice::updateSprite(Event)
+{
+    if (GameEngine::instance)
+    {
+        Sprite* sprite = GameEngine::instance->playerSprites[this->playerNumber + 1];
+
+        GameStatePacket gsp;
+        gsp.type = GAME_STATE_PKT_TYPE_INITIAL_SPRITE_DATA; // lets just get inital sprite data working.
+        gsp.owner = this->playerNumber; // we're the owner...
+        gsp.count = 1; // 0 for now
+
+        InitialSpriteData isd;
+
+        // fill out the initial sprite data struct.
+        isd.owner = sprite->owner;
+        isd.sprite_id = sprite->getHash();
+        isd.x = sprite->getX();
+        isd.y = sprite->getY();
+
+        // copy the struct into the game state packet.
+        memcpy(gsp.data, &isd, sizeof(InitialSpriteData));
+
+        PktSerialProtocol::send((uint8_t*)&gsp, sizeof(GameStatePacket), this->device.address);
+    }
+}
+
 void PktArcadeDevice::handlePacket(PktSerialPkt* p)
 {
     manager.processPacket(p);
@@ -14,8 +40,15 @@ PktArcadeHost::PktArcadeHost(PktDevice d, uint8_t playerNumber, GameStateManager
 {
     games = NULL;
 
+    // we are always in charge of player 0.
+    if (device.flags & PKT_DEVICE_FLAGS_LOCAL)
+        Player::playerNumber = 1;
+
     if (EventModel::defaultEventBus)
+    {
+        EventModel::defaultEventBus->listen(DEVICE_ID_PLAYER_SPRITE, this->playerNumber, (PktArcadeDevice*)this, &PktArcadeDevice::updateSprite, MESSAGE_BUS_LISTENER_IMMEDIATE);
         EventModel::defaultEventBus->listen(this->id, GS_EVENT_SEND_GAME_STATE, this, &PktArcadeHost::sendState);
+    }
 }
 
 GameAdvertListItem* PktArcadeHost::getGamesList()
@@ -42,7 +75,7 @@ int PktArcadeHost::queueControlPacket()
     if (manager.engine.isRunning())
         cp.flags |= GS_CONTROL_FLAG_GAME_IN_PROGRESS;
 
-    advert->max_players = manager.engine.getMaxPlayers();
+    advert->playerNumber = 0;
     advert->slots_available = manager.engine.getAvailableSlots();
     advert->game_id = manager.engine.getIdentifier();
 
@@ -88,17 +121,23 @@ void PktArcadeHost::handleControlPacket(ControlPacket* cp)
         PktDevice d;
 
         d.address = cp->address;
-        d.flags = cp->flags;
+        d.flags = cp->flags | PKT_DEVICE_FLAGS_REMOTE | PKT_DEVICE_FLAGS_INITIALISED | PKT_DEVICE_FLAGS_CP_SEEN;
         d.rolling_counter = 0;
         d.serial_number = cp->serial_number;
 
         DMESG("PLAYER: %d %d",d.address,d.serial_number);
         // if we have a player slot available and the arcade has requested to play...
         // if arcade has requested to spectate and we allow spectate mode
-        if (manager.engine.getAvailableSlots() > 0 && (cp->flags & GS_CONTROL_FLAG_PLAY))
+
+        uint8_t avail = manager.engine.getAvailableSlots();
+        uint8_t max = manager.engine.getMaxPlayers();
+
+        if (avail > 0 && (cp->flags & GS_CONTROL_FLAG_PLAY))
         {
             // communicate game state
-            manager.addPlayer(d);
+            uint8_t playerNo = max - avail + 1;
+            manager.addPlayer(d, playerNo);
+            advert->playerNumber = playerNo;
             cp->flags |= GS_CONTROL_FLAG_JOIN_ACK;
 
             // communicate the game state in a little while.
@@ -156,12 +195,16 @@ int PktArcadeHost::deviceConnected(PktDevice d)
 {
     PktSerialDriver::deviceConnected(d);
     manager.hostConnectionChange(this, true);
+    DMESG("PLAYER C");
+    return DEVICE_OK;
 }
 
 int PktArcadeHost::deviceRemoved()
 {
     PktSerialDriver::deviceRemoved();
     manager.hostConnectionChange(this, false);
+    DMESG("PLAYER D/C");
+    return DEVICE_OK;
 }
 
 void PktArcadeHost::safeSend(uint8_t* data, int len)
@@ -183,7 +226,7 @@ void PktArcadeHost::sendState(Event)
     GameStatePacket gsp;
     gsp.type = GAME_STATE_PKT_TYPE_INITIAL_SPRITE_DATA; // lets just get inital sprite data working.
     gsp.owner = 0; // we're the owner...
-    gsp.flags = 0; // 0 for now
+    gsp.count = 0; // 0 for now
 
     InitialSpriteData isd;
 
@@ -208,7 +251,10 @@ void PktArcadeHost::sendState(Event)
             // copy the struct into the game state packet.
             memcpy(dataPointer, &isd, sizeof(InitialSpriteData));
             dataPointer += sizeof(InitialSpriteData);
-            spriteCount = (spriteCount + 1) % spritesPerPacket;
+
+            spriteCount++;
+            gsp.count = spriteCount;
+            spriteCount %= spritesPerPacket;
 
             // if the packet is full, send packet and reset spriteCount.
             if (spriteCount == 0)

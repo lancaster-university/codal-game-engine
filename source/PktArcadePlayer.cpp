@@ -13,6 +13,8 @@ PktArcadePlayer::PktArcadePlayer(PktDevice d, uint8_t playerNumber, GameStateMan
 
 void PktArcadePlayer::handleControlPacket(ControlPacket* cp)
 {
+    GameAdvertisement* advert = (GameAdvertisement*)cp->data;
+
     if (cp->packet_type == GS_CONTROL_PKT_TYPE_JOIN)
     {
         if (cp->serial_number == device.serial_number)
@@ -20,6 +22,15 @@ void PktArcadePlayer::handleControlPacket(ControlPacket* cp)
             // we've been accepted...
             if (cp->flags & GS_CONTROL_FLAG_JOIN_ACK)
             {
+                this->playerNumber = advert->playerNumber;
+                Player::playerNumber = advert->playerNumber;
+
+                // todo: resolve indexing woes of sprite arrays vs. events
+                // events probably aren't the best way, especially after we scale up the number of sprites...
+
+                if (EventModel::defaultEventBus)
+                    EventModel::defaultEventBus->listen(DEVICE_ID_PLAYER_SPRITE, this->playerNumber, (PktArcadeDevice*)this, &PktArcadeDevice::updateSprite, MESSAGE_BUS_LISTENER_IMMEDIATE);
+
                 status |= PKT_ARCADE_PLAYER_STATUS_JOIN_SUCCESS;
                 Event(DEVICE_ID_NOTIFY_ONE, PKT_ARCADE_EVT_PLAYER_JOIN_RESULT);
                 return;
@@ -36,12 +47,16 @@ int PktArcadePlayer::deviceConnected(PktDevice d)
 {
     PktSerialDriver::deviceConnected(d);
     manager.playerConnectionChange(this, true);
+    DMESG("PLAYER C");
+    return DEVICE_OK;
 }
 
 int PktArcadePlayer::deviceRemoved()
 {
     PktSerialDriver::deviceRemoved();
     manager.playerConnectionChange(this, false);
+    DMESG("PLAYER D/C");
+    return DEVICE_OK;
 }
 
 int PktArcadePlayer::sendJoinSpectateRequest(GameAdvertisement* ad, uint16_t flags)

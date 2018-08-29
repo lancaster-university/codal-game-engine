@@ -4,10 +4,12 @@
 #include "CodalComponent.h"
 #include "CodalConfig.h"
 #include "Sprite.h"
+#include "PlayerSprite.h"
 #include "Event.h"
 #include "PhysicsBody.h"
 
 #define GAME_ENGINE_MAX_SPRITES         20
+#define GAME_ENGINE_MAX_PLAYER_SPRITES  10
 #define GAME_ENGINE_EVT_UPDATE          2
 
 #define GAME_ENGINE_STATUS_STOPPED      0x02
@@ -27,7 +29,11 @@ namespace codal
         ManagedString name;
 
         public:
+
+        static GameEngine* instance;
+
         Sprite* sprites[GAME_ENGINE_MAX_SPRITES];
+        Sprite* playerSprites[GAME_ENGINE_MAX_PLAYER_SPRITES];
 
         GameEngine(Image& displayBuffer, ManagedString gameName, uint32_t identifier, int maxPlayers = 1, uint16_t id = DEVICE_ID_GAME_ENGINE);
 
@@ -47,6 +53,8 @@ namespace codal
         int getAvailableSlots();
 
         int add(Sprite& s);
+        int add(PlayerSprite& s);
+
         int remove(Sprite& s);
 
         void update(Event);

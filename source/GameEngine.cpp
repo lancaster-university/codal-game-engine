@@ -6,12 +6,15 @@
 
 using namespace codal;
 
+GameEngine* GameEngine::instance = NULL;
+
 GameEngine::GameEngine(Image& displayBuffer, ManagedString gameName, uint32_t identifier, int maxPlayers, uint16_t id) : displayBuffer(displayBuffer)
 {
     DMESG("GE CONS");
-    memset(sprites, 0, GAME_ENGINE_MAX_SPRITES * sizeof(Sprite*));
+    instance = this;
 
-    // system_timer_event_every(4, id, GAME_ENGINE_EVT_UPDATE);
+    memset(sprites, 0, GAME_ENGINE_MAX_SPRITES * sizeof(Sprite*));
+    memset(playerSprites, 0, GAME_ENGINE_MAX_PLAYER_SPRITES * sizeof(Sprite*));
 
     this->status = GAME_ENGINE_STATUS_STOPPED;
 
@@ -100,6 +103,12 @@ int GameEngine::add(Sprite& s)
     return DEVICE_OK;
 }
 
+int GameEngine::add(PlayerSprite& s)
+{
+    this->playerSprites[s.owner] = &s;
+    add(*(Sprite*)&s); // LOL
+}
+
 int GameEngine::remove(Sprite& s)
 {
     int i = 0;
@@ -151,5 +160,7 @@ void GameEngine::update(Event)
 
     for (int i = 0; i < GAME_ENGINE_MAX_SPRITES; i++)
         sprites[i]->draw(displayBuffer);
+
+    Event(DEVICE_ID_GAME_ENGINE, GAME_ENGINE_EVT_UPDATE);
 }
 

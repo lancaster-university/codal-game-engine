@@ -100,7 +100,7 @@ int GameStateManager::hostGame()
     {
         // clean host list, there should only ever be one, but lets future proof code just in case.
         clearHostList();
-        addHostToList(new PktArcadeHost(PktDevice(0, 0, PKT_DEVICE_FLAGS_LOCAL | PKT_DEVICE_FLAGS_BROADCAST, this->serial_number), 0, *this));
+        addHostToList(new PktArcadeHost(PktDevice(0, 0, PKT_DEVICE_FLAGS_LOCAL | PKT_DEVICE_FLAGS_BROADCAST, this->serial_number), 1, *this));
 
         this->status |= GAME_STATE_STATUS_ADVERTISING;
     }
@@ -205,9 +205,9 @@ void GameStateManager::hostConnectionChange(PktArcadeHost* hostDriver, bool conn
 
 }
 
-int GameStateManager::addPlayer(PktDevice player)
+int GameStateManager::addPlayer(PktDevice player, uint8_t playerNumber)
 {
-    return addPlayerToList(new PktArcadePlayer(player, 0, *this));
+    return addPlayerToList(new PktArcadePlayer(player, playerNumber, *this));
 }
 
 int GameStateManager::addSpectator(PktDevice player)
@@ -228,7 +228,7 @@ int GameStateManager::joinGame(GameAdvertListItem* advert)
 
     // create a remote host, delete current host (will include the deletion of the games list)
     clearHostList();
-    addHostToList(new PktArcadeHost(PktDevice(0, 0, PKT_DEVICE_FLAGS_REMOTE, serial), 0, *this));
+    addHostToList(new PktArcadeHost(PktDevice(0, 0, PKT_DEVICE_FLAGS_REMOTE, serial), 1, *this));
 
     // create ourselves as a local driver
     clearPlayerList();
@@ -251,10 +251,10 @@ void GameStateManager::processPacket(PktSerialPkt* p)
 
     if (gsp->type == GAME_STATE_PKT_TYPE_INITIAL_SPRITE_DATA)
     {
-        int spritesPerPacket = GAME_STATE_PKT_DATA_SIZE / sizeof(InitialSpriteData);
+        int spriteCount = gsp->count;
 
         InitialSpriteData* isd = (InitialSpriteData *)gsp->data;
-        for (int i = 0; i < spritesPerPacket; i++)
+        for (int i = 0; i < spriteCount; i++)
         {
             for (int j = 0; j < GAME_ENGINE_MAX_SPRITES; j++)
             {
@@ -265,8 +265,8 @@ void GameStateManager::processPacket(PktSerialPkt* p)
                 // if match perform state sync.
                 if (engine.sprites[j]->getHash() == isd[i].sprite_id)
                 {
-                    engine.sprites[j]->setX(isd[i].x);
-                    engine.sprites[j]->setY(isd[i].y);
+                    engine.sprites[j]->body.position.x = isd[i].x;
+                    engine.sprites[j]->body.position.y = isd[i].y;
                 }
             }
         }
