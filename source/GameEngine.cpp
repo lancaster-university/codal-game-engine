@@ -120,31 +120,32 @@ int GameEngine::remove(Sprite& s)
 
 void GameEngine::update(Event)
 {
-    if (status & GAME_ENGINE_STATUS_STOPPED)
-        return;
-
     displayBuffer.clear();
 
-    for (int i = 0; i < GAME_ENGINE_MAX_SPRITES; i++)
+    // the engine can be stopped, but sprites can still be drawn.
+    if (!(status & GAME_ENGINE_STATUS_STOPPED))
     {
-        if (sprites[i] == NULL)
-            continue;
-
-        sprites[i]->body.apply();
-    }
-
-    for (int i = 0; i < GAME_ENGINE_MAX_SPRITES; i++)
-    {
-        if (sprites[i] == NULL)
-            continue;
-
-        for (int j = i + 1; j < GAME_ENGINE_MAX_SPRITES; j++)
+        for (int i = 0; i < GAME_ENGINE_MAX_SPRITES; i++)
         {
-            if (sprites[j] == NULL || sprites[j] == sprites[i])
+            if (sprites[i] == NULL)
                 continue;
 
-            if (sprites[i]->body.intersectsWith(sprites[j]->body))
-                sprites[i]->body.collideWith(sprites[j]->body);
+            sprites[i]->body.apply();
+        }
+
+        for (int i = 0; i < GAME_ENGINE_MAX_SPRITES; i++)
+        {
+            if (sprites[i] == NULL)
+                continue;
+
+            for (int j = i + 1; j < GAME_ENGINE_MAX_SPRITES; j++)
+            {
+                if (sprites[j] == NULL || sprites[j] == sprites[i])
+                    continue;
+
+                if (sprites[i]->body.intersectsWith(sprites[j]->body))
+                    sprites[i]->body.collideWith(sprites[j]->body);
+            }
         }
     }
 
