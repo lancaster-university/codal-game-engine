@@ -115,16 +115,7 @@ namespace codal
         PktArcadeDevice* next;
         GameStateManager& manager;
 
-        PktArcadeDevice(PktDevice d, uint8_t playerNumber, GameStateManager& manager, uint16_t id) :
-                PktSerialDriver(d, PKT_DRIVER_CLASS_ARCADE, id),
-                manager(manager)
-        {
-            playerNumber = playerNumber;
-            next = NULL;
-
-            if (PktSerialProtocol::instance)
-                PktSerialProtocol::instance->add(*this);
-        }
+        PktArcadeDevice(PktDevice d, uint8_t playerNumber, GameStateManager& manager, uint16_t id);
 
         virtual void updateSprite(Event);
 

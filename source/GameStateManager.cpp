@@ -207,12 +207,13 @@ void GameStateManager::hostConnectionChange(PktArcadeHost* hostDriver, bool conn
 
 int GameStateManager::addPlayer(PktDevice player, uint8_t playerNumber)
 {
+    DMESG("ADD NEW PLAYER A:%d PN:%d",player.address,playerNumber);
     return addPlayerToList(new PktArcadePlayer(player, playerNumber, *this));
 }
 
 int GameStateManager::addSpectator(PktDevice player)
 {
-    return addPlayerToList(new PktArcadePlayer(player, 0, *this));
+    return addPlayerToList(new PktArcadePlayer(player, 1, *this));
 }
 
 int GameStateManager::joinGame(GameAdvertListItem* advert)

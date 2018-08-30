@@ -2,8 +2,20 @@
 
 using namespace codal;
 
+PktArcadeDevice::PktArcadeDevice(PktDevice d, uint8_t playerNumber, GameStateManager& manager, uint16_t id) :
+        PktSerialDriver(d, PKT_DRIVER_CLASS_ARCADE, id),
+        manager(manager)
+{
+    this->playerNumber = playerNumber;
+    next = NULL;
+
+    if (PktSerialProtocol::instance)
+        PktSerialProtocol::instance->add(*this);
+}
+
 void PktArcadeDevice::updateSprite(Event)
 {
+    DMESG("US ADDR: %d PN: %d", this->device.address, this->playerNumber);
     if (GameEngine::instance)
     {
         Sprite* sprite = GameEngine::instance->playerSprites[this->playerNumber];
@@ -34,6 +46,7 @@ void PktArcadeDevice::handlePacket(PktSerialPkt* p)
 
     // if the classes are run in broadcast mode, packets could be received multiple times.
     // only process packets that we "own".
+    DMESG("STD OWNER: %d %d", gsp->owner, this->playerNumber);
     if (gsp->owner == this->playerNumber)
         manager.processPacket(p);
 }

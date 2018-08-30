@@ -13,6 +13,9 @@ PktArcadePlayer::PktArcadePlayer(PktDevice d, uint8_t playerNumber, GameStateMan
 
 void PktArcadePlayer::handleControlPacket(ControlPacket* cp)
 {
+    if (this->device.flags & PKT_DEVICE_FLAGS_REMOTE)
+        return;
+
     GameAdvertisement* advert = (GameAdvertisement*)cp->data;
 
     if (cp->packet_type == GS_CONTROL_PKT_TYPE_JOIN)
@@ -44,7 +47,7 @@ int PktArcadePlayer::deviceConnected(PktDevice d)
 {
     PktSerialDriver::deviceConnected(d);
     manager.playerConnectionChange(this, true);
-    DMESG("PLAYER C");
+    DMESG("P C %d %d", this->device.address, this->playerNumber);
     return DEVICE_OK;
 }
 
@@ -52,7 +55,7 @@ int PktArcadePlayer::deviceRemoved()
 {
     PktSerialDriver::deviceRemoved();
     manager.playerConnectionChange(this, false);
-    DMESG("PLAYER D/C");
+    DMESG("P D/C %d %d", this->device.address, this->playerNumber);
     return DEVICE_OK;
 }
 

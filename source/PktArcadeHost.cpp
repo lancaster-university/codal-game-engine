@@ -29,7 +29,7 @@ GameAdvertListItem* PktArcadeHost::getGamesList()
 // this will only be called if local, which is brilliant -- single driver multiple uses.
 int PktArcadeHost::queueControlPacket()
 {
-    DMESG("HOST: addr %d flags %d sn %d",device.address, device.flags, device.serial_number);
+    // DMESG("HOST: addr %d flags %d sn %d",device.address, device.flags, device.serial_number);
     ControlPacket cp;
     memset(&cp, 0, sizeof(ControlPacket));
 
@@ -81,11 +81,15 @@ PktArcadeHost::~PktArcadeHost()
 
 void PktArcadeHost::handleControlPacket(ControlPacket* cp)
 {
+    // if (this->device.flags & PKT_DEVICE_FLAGS_REMOTE)
+    //     return;
+
     GameAdvertisement* advert = (GameAdvertisement*)cp->data;
 
     DMESG("CTRL t: %d", cp->packet_type);
 
     // we're advertising and are receiving a join request.                                          we need probably a less intensive way of verifying a join
+    // add remote check here...
     if (cp->packet_type == GS_CONTROL_PKT_TYPE_JOIN && advert->game_id == manager.engine.getIdentifier() && ManagedString((char *)advert->game_name) == manager.engine.getName())
     {
         PktDevice d;
@@ -166,7 +170,7 @@ int PktArcadeHost::deviceConnected(PktDevice d)
 {
     PktSerialDriver::deviceConnected(d);
     manager.hostConnectionChange(this, true);
-    DMESG("PLAYER C");
+    DMESG("H C %d %d", this->device.address, this->playerNumber);
     return DEVICE_OK;
 }
 
@@ -174,7 +178,7 @@ int PktArcadeHost::deviceRemoved()
 {
     PktSerialDriver::deviceRemoved();
     manager.hostConnectionChange(this, false);
-    DMESG("PLAYER D/C");
+    DMESG("H D/C %d %d", this->device.address, this->playerNumber);
     return DEVICE_OK;
 }
 
@@ -191,7 +195,7 @@ void PktArcadeHost::safeSend(uint8_t* data, int len)
 
 void PktArcadeHost::sendState(Event)
 {
-    DMESG("SEND SPRITES");
+    DMESG("SEND SPRITES ADDR: %d", this->device.address);
     int spritesPerPacket = GAME_STATE_PKT_DATA_SIZE / sizeof(InitialSpriteData);
 
     GameStatePacket gsp;
