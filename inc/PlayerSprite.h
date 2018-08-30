@@ -7,10 +7,6 @@
 #include "PhysicsBody.h"
 #include "Sprite.h"
 
-#define PLAYER_SPRITE_EVT_UPDATE        2
-
-#define PLAYER_SPRITE_EVT_BASE          1
-
 namespace codal
 {
     class PlayerSprite : public Sprite

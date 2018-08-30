@@ -11,13 +11,13 @@ PlayerSprite::PlayerSprite(ManagedString name, PhysicsBody& body, Image& i, uint
 int PlayerSprite::setX(int x)
 {
     body.position.x = x;
-    Event(DEVICE_ID_PLAYER_SPRITE, PLAYER_SPRITE_EVT_BASE + this->owner);
+    setDirty(true);
     return DEVICE_OK;
 }
 
 int PlayerSprite::setY(int y)
 {
     body.position.y = y;
-    Event(DEVICE_ID_PLAYER_SPRITE, PLAYER_SPRITE_EVT_BASE + this->owner);
+    setDirty(true);
     return DEVICE_OK;
 }

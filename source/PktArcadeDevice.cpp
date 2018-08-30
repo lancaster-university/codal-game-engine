@@ -44,14 +44,26 @@ void PktArcadeDevice::updateSprite(Event)
     DMESG("US ADDR: %d PN: %d", this->device.address, this->playerNumber);
     if (GameEngine::instance)
     {
-        Sprite* sprite = GameEngine::instance->playerSprites[this->playerNumber];
-
         GameStatePacket gsp;
-        gsp.type = GAME_STATE_PKT_TYPE_INITIAL_SPRITE_DATA; // lets just get inital sprite data working.
+        gsp.type = GAME_STATE_PKT_TYPE_INITIAL_SPRITE_DATA;
+        // gsp.type = GAME_STATE_PKT_TYPE_MOVING_SPRITE_DATA;
         gsp.owner = this->playerNumber; // we're the owner...
         gsp.count = 1; // 0 for now
 
+        Sprite *sprite = GameEngine::instance->playerSprites[this->playerNumber];
+
         InitialSpriteData isd;
+
+        // MovingSpriteData msd;
+
+        // for (int i = 0; i < PKT_ARCADE_DEVICE_MAX_CONTROL_SPRITES; i++)
+        // {
+        //     if (controllingSprites[i]->isDirty())
+        //     {
+
+        //     }
+        // }
+
 
         // fill out the initial sprite data struct.
         isd.owner = sprite->owner;

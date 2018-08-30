@@ -11,8 +11,7 @@ int Sprite::fill(uint8_t colour)
     return DEVICE_OK;
 }
 
-
-Sprite::Sprite(ManagedString name, PhysicsBody& body, Image& i, uint8_t owner) : body(body)
+Sprite::Sprite(ManagedString name, PhysicsBody& body, Image& i, int8_t owner) : body(body)
 {
     this->owner = owner;
     this->variableHash = PearsonHash::hash16(name);
@@ -99,4 +98,20 @@ void Sprite::draw(Image& display)
 {
     // DMESG("DRAW x: %d y: %d z: %d",  body.position.x, body.position.y, body.position.z);
     display.paste(this->image, body.position.x, body.position.y);
+}
+
+void Sprite::setDirty(bool dirty)
+{
+    if (dirty)
+    {
+        status |= SPRITE_STATUS_DIRTY_BIT;
+        Event(DEVICE_ID_SPRITE, SPRITE_EVT_BASE + this->owner);
+    }
+    else
+        status &= ~SPRITE_STATUS_DIRTY_BIT;
+}
+
+bool Sprite::isDirty(bool dirty)
+{
+    return (status & SPRITE_STATUS_DIRTY_BIT) ? true : false;
 }

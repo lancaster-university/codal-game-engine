@@ -5,10 +5,14 @@
 #include "Image.h"
 #include "CoordinateSystem.h"
 #include "PhysicsBody.h"
+#include "CodalComponent.h"
+
+#define SPRITE_EVT_BASE                 2
+#define SPRITE_STATUS_DIRTY_BIT         0x02
 
 namespace codal
 {
-    class Sprite
+    class Sprite : public CodalComponent
     {
         Image image;
         uint16_t flags;
@@ -47,6 +51,12 @@ namespace codal
         int getX();
 
         int getY();
+
+
+        // for optimal updates
+        void setDirty(bool dirty);
+
+        bool isDirty(bool dirty);
     };
 }
 

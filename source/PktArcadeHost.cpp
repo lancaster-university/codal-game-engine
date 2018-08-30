@@ -21,7 +21,7 @@ PktArcadeHost::PktArcadeHost(PktDevice d, uint8_t playerNumber, GameStateManager
 
     if (EventModel::defaultEventBus)
     {
-        EventModel::defaultEventBus->listen(DEVICE_ID_PLAYER_SPRITE, PLAYER_SPRITE_EVT_BASE + this->playerNumber, (PktArcadeDevice*)this, &PktArcadeDevice::updateSprite, MESSAGE_BUS_LISTENER_IMMEDIATE);
+        EventModel::defaultEventBus->listen(DEVICE_ID_SPRITE, SPRITE_EVT_BASE + this->playerNumber, (PktArcadeDevice*)this, &PktArcadeDevice::updateSprite, MESSAGE_BUS_LISTENER_DROP_IF_BUSY);
         EventModel::defaultEventBus->listen(this->id, GS_EVENT_SEND_GAME_STATE, this, &PktArcadeHost::sendState);
     }
 }
@@ -97,7 +97,7 @@ int PktArcadeHost::handleControlPacket(ControlPacket* cp)
         PktDevice d;
 
         d.address = cp->address;
-        d.flags = cp->flags | PKT_DEVICE_FLAGS_REMOTE | PKT_DEVICE_FLAGS_INITIALISED | PKT_DEVICE_FLAGS_CP_SEEN;
+        d.flags = cp->flags | PKT_DEVICE_FLAGS_REMOTE | PKT_DEVICE_FLAGS_CP_SEEN;
         d.rolling_counter = 0;
         d.serial_number = cp->serial_number;
 
@@ -245,7 +245,7 @@ void PktArcadeHost::sendState(Event)
 
     GameStatePacket gsp;
     gsp.type = GAME_STATE_PKT_TYPE_INITIAL_SPRITE_DATA; // lets just get inital sprite data working.
-    gsp.owner = 0; // we're the owner...
+    gsp.owner = this->playerNumber; // we're the owner...
     gsp.count = 0; // 0 for now
 
     InitialSpriteData isd;

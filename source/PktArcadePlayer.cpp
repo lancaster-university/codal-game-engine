@@ -31,7 +31,7 @@ int PktArcadePlayer::handleControlPacket(ControlPacket* cp)
                 findControllingSprites();
 
                 if (EventModel::defaultEventBus)
-                    EventModel::defaultEventBus->listen(DEVICE_ID_PLAYER_SPRITE, PLAYER_SPRITE_EVT_BASE + this->playerNumber, (PktArcadeDevice*)this, &PktArcadeDevice::updateSprite, MESSAGE_BUS_LISTENER_IMMEDIATE);
+                    EventModel::defaultEventBus->listen(DEVICE_ID_SPRITE, SPRITE_EVT_BASE + this->playerNumber, (PktArcadeDevice*)this, &PktArcadeDevice::updateSprite, MESSAGE_BUS_LISTENER_DROP_IF_BUSY);
 
                 status |= PKT_ARCADE_PLAYER_STATUS_JOIN_SUCCESS;
                 Event(DEVICE_ID_NOTIFY_ONE, PKT_ARCADE_EVT_PLAYER_JOIN_RESULT);
