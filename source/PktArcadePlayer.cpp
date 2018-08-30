@@ -11,10 +11,10 @@ PktArcadePlayer::PktArcadePlayer(PktDevice d, uint8_t playerNumber, GameStateMan
     status = 0;
 }
 
-void PktArcadePlayer::handleControlPacket(ControlPacket* cp)
+int PktArcadePlayer::handleControlPacket(ControlPacket* cp)
 {
     if (this->device.flags & PKT_DEVICE_FLAGS_REMOTE)
-        return;
+        return DEVICE_OK;
 
     GameAdvertisement* advert = (GameAdvertisement*)cp->data;
 
@@ -28,19 +28,23 @@ void PktArcadePlayer::handleControlPacket(ControlPacket* cp)
                 this->playerNumber = advert->playerNumber;
                 Player::playerNumber = advert->playerNumber;
 
+                findControllingSprites();
+
                 if (EventModel::defaultEventBus)
                     EventModel::defaultEventBus->listen(DEVICE_ID_PLAYER_SPRITE, PLAYER_SPRITE_EVT_BASE + this->playerNumber, (PktArcadeDevice*)this, &PktArcadeDevice::updateSprite, MESSAGE_BUS_LISTENER_IMMEDIATE);
 
                 status |= PKT_ARCADE_PLAYER_STATUS_JOIN_SUCCESS;
                 Event(DEVICE_ID_NOTIFY_ONE, PKT_ARCADE_EVT_PLAYER_JOIN_RESULT);
-                return;
+                return DEVICE_OK;
             }
 
             // we've received a response without an ack, i.e. rejected
             Event(DEVICE_ID_NOTIFY_ONE, PKT_ARCADE_EVT_PLAYER_JOIN_RESULT);
-            return;
+            return DEVICE_OK;
         }
     }
+
+    return DEVICE_OK;
 }
 
 int PktArcadePlayer::deviceConnected(PktDevice d)

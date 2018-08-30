@@ -6,11 +6,37 @@ PktArcadeDevice::PktArcadeDevice(PktDevice d, uint8_t playerNumber, GameStateMan
         PktSerialDriver(d, PKT_DRIVER_CLASS_ARCADE, id),
         manager(manager)
 {
+    memset(this->controllingSprites, 0, PKT_ARCADE_DEVICE_MAX_CONTROL_SPRITES * sizeof(Sprite*));
     this->playerNumber = playerNumber;
     next = NULL;
 
     if (PktSerialProtocol::instance)
         PktSerialProtocol::instance->add(*this);
+}
+
+void PktArcadeDevice::findControllingSprites()
+{
+    if (GameEngine::instance)
+    {
+        // reset the array (in case sprites have been removed).
+        memset(this->controllingSprites, 0, PKT_ARCADE_DEVICE_MAX_CONTROL_SPRITES * sizeof(Sprite*));
+
+        int controlSpriteIdx = 0;
+        for (int i = 0; i < GAME_ENGINE_MAX_SPRITES; i++)
+        {
+            if (controlSpriteIdx >= PKT_ARCADE_DEVICE_MAX_CONTROL_SPRITES - 1)
+            {
+                DMESG("MAX SPRITES reached");
+                break;
+            }
+
+            Sprite* s = GameEngine::instance->sprites[i];
+
+            // set the slot in the array.
+            if (s && s->owner == this->playerNumber)
+                this->controllingSprites[controlSpriteIdx++] = s;
+        }
+    }
 }
 
 void PktArcadeDevice::updateSprite(Event)
@@ -40,7 +66,7 @@ void PktArcadeDevice::updateSprite(Event)
     }
 }
 
-void PktArcadeDevice::handlePacket(PktSerialPkt* p)
+int PktArcadeDevice::handlePacket(PktSerialPkt* p)
 {
     GameStatePacket* gsp = (GameStatePacket *)p->data;
 
@@ -48,5 +74,44 @@ void PktArcadeDevice::handlePacket(PktSerialPkt* p)
     // only process packets that we "own".
     DMESG("STD OWNER: %d %d", gsp->owner, this->playerNumber);
     if (gsp->owner == this->playerNumber)
-        manager.processPacket(p);
+    {
+        GameStatePacket* gsp = (GameStatePacket *)p->data;
+
+        if (gsp->type == GAME_STATE_PKT_TYPE_INITIAL_SPRITE_DATA)
+        {
+            int spriteCount = gsp->count;
+
+            InitialSpriteData* isd = (InitialSpriteData *)gsp->data;
+            for (int i = 0; i < spriteCount; i++)
+            {
+                for (int j = 0; j < GAME_ENGINE_MAX_SPRITES; j++)
+                {
+                    // an empty sprite requires no action.
+                    if (GameEngine::instance->sprites[j] == NULL)
+                        continue;
+
+                    // if match perform state sync.
+                    if (GameEngine::instance->sprites[j]->getHash() == isd[i].sprite_id)
+                    {
+                        GameEngine::instance->sprites[j]->body.position.x = isd[i].x;
+                        GameEngine::instance->sprites[j]->body.position.y = isd[i].y;
+                    }
+                }
+            }
+        }
+
+        if (gsp->type == GAME_STATE_PKT_TYPE_MOVING_SPRITE_DATA)
+        {
+
+        }
+
+        if (gsp->type == GAME_STATE_PKT_TYPE_EVENT)
+        {
+
+        }
+
+        return DEVICE_OK;
+    }
+
+    return DEVICE_CANCELLED;
 }

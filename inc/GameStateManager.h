@@ -36,12 +36,13 @@
 #define GAME_STATE_STATUS_ADVERTISING               0x04
 #define GAME_STATE_STATUS_JOINED                    0x08
 
+#define PKT_ARCADE_DEVICE_MAX_CONTROL_SPRITES       5
 #define PKT_ARCADE_EVT_PLAYER_JOIN_RESULT           2
 #define PKT_ARCADE_PLAYER_STATUS_JOIN_SUCCESS       0x02
 
 #define GAME_STATE_PKT_TYPE_INITIAL_SPRITE_DATA     1
 #define GAME_STATE_PKT_TYPE_MOVING_SPRITE_DATA      2
-#define GAME_STATE_PKT_TYPE_COLLISION               3
+#define GAME_STATE_PKT_TYPE_EVENT                   3
 
 #define GAME_STATE_PKT_FLAG_START                   0x01 // indicates the start of a stream of packets
 #define GAME_STATE_PKT_FLAG_END                     0x02 // indicates that this is the last of a stream of packets
@@ -63,6 +64,10 @@ namespace codal
         uint8_t data[GAME_STATE_PKT_DATA_SIZE];
     };
 
+    // only the host can transmit initial state, the host can update any player state
+    // only individual players can update the state of their own sprites. Each ArcadePlayer maintains a list of their own sprites.
+    // every collision or event must reach concensus, i.e. all arcades must send a collision event,
+    // if the host doesn't see a collision or the data is bad, state is resynnced.
     struct InitialSpriteData
     {
         uint8_t owner;
@@ -111,6 +116,7 @@ namespace codal
     class PktArcadeDevice : public PktSerialDriver
     {
         public:
+        Sprite* controllingSprites[PKT_ARCADE_DEVICE_MAX_CONTROL_SPRITES];
         uint8_t playerNumber;
         PktArcadeDevice* next;
         GameStateManager& manager;
@@ -119,9 +125,15 @@ namespace codal
 
         virtual void updateSprite(Event);
 
-        virtual void handleControlPacket(ControlPacket* cp) {}
+        virtual int handleControlPacket(ControlPacket* cp)
+        {
+            // return an error code so another driver is found.
+            return DEVICE_CANCELLED;
+        }
 
-        virtual void handlePacket(PktSerialPkt* p);
+        virtual int handlePacket(PktSerialPkt* p);
+
+        virtual void findControllingSprites();
     };
 
     class PktArcadeHost : public PktArcadeDevice
@@ -135,7 +147,7 @@ namespace codal
 
         virtual int queueControlPacket();
 
-        virtual void handleControlPacket(ControlPacket* cp);
+        virtual int handleControlPacket(ControlPacket* cp);
 
         virtual int deviceRemoved();
 
@@ -144,6 +156,8 @@ namespace codal
         GameAdvertListItem* getGamesList();
 
         void sendState(Event);
+
+        virtual int handlePacket(PktSerialPkt*);
 
         ~PktArcadeHost();
     };
@@ -155,7 +169,7 @@ namespace codal
         public:
         PktArcadePlayer(PktDevice d, uint8_t playerNumber, GameStateManager& manager);
 
-        virtual void handleControlPacket(ControlPacket* cp);
+        virtual int handleControlPacket(ControlPacket* cp);
 
         virtual int deviceRemoved();
 
@@ -290,17 +304,6 @@ namespace codal
          * @note beginning to host a game or join a game will invalidate this list (it will be free'd)
          **/
         int joinGame(GameAdvertListItem* advert);
-
-        /**
-         * Any player or host that receives data will pass the received packet to this class where it can be disseminated into game state.
-         *
-         * @param name the name of the game to join.
-         **/
-        void processPacket(PktSerialPkt* pkt);
-
-        //
-
-        void localUpdate(Event);
 
         friend class PktArcadePlayer;
         friend class PktArcadeHost;

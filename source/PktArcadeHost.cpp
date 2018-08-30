@@ -10,8 +10,14 @@ PktArcadeHost::PktArcadeHost(PktDevice d, uint8_t playerNumber, GameStateManager
     games = NULL;
 
     // we are always in charge of player 0.
+    // only set if we're local (otherwise other players could control)
     if (device.flags & PKT_DEVICE_FLAGS_LOCAL)
         Player::playerNumber = 0;
+
+    if (!(device.flags & PKT_DEVICE_FLAGS_BROADCAST))
+        findControllingSprites();
+
+    this->playerNumber = 0;
 
     if (EventModel::defaultEventBus)
     {
@@ -79,18 +85,14 @@ PktArcadeHost::~PktArcadeHost()
     games = NULL;
 }
 
-void PktArcadeHost::handleControlPacket(ControlPacket* cp)
+int PktArcadeHost::handleControlPacket(ControlPacket* cp)
 {
-    // if (this->device.flags & PKT_DEVICE_FLAGS_REMOTE)
-    //     return;
-
     GameAdvertisement* advert = (GameAdvertisement*)cp->data;
 
     DMESG("CTRL t: %d", cp->packet_type);
 
     // we're advertising and are receiving a join request.                                          we need probably a less intensive way of verifying a join
-    // add remote check here...
-    if (cp->packet_type == GS_CONTROL_PKT_TYPE_JOIN && advert->game_id == manager.engine.getIdentifier() && ManagedString((char *)advert->game_name) == manager.engine.getName())
+    if (cp->packet_type == GS_CONTROL_PKT_TYPE_JOIN && !(this->device.flags & PKT_DEVICE_FLAGS_REMOTE) && advert->game_id == manager.engine.getIdentifier() && ManagedString((char *)advert->game_name) == manager.engine.getName())
     {
         PktDevice d;
 
@@ -125,7 +127,7 @@ void PktArcadeHost::handleControlPacket(ControlPacket* cp)
         }
 
         PktSerialProtocol::send((uint8_t *)cp, sizeof(ControlPacket), 0);
-        return;
+        return DEVICE_OK;
     }
 
     // if we're a host in broadcast mode, the user is looking for games.
@@ -139,7 +141,7 @@ void PktArcadeHost::handleControlPacket(ControlPacket* cp)
         {
             // don't add duplicates.
             if (gameListItem->serial_number == cp->serial_number && gameListItem->item->game_id == advert->game_id)
-                return;
+                return DEVICE_OK;
 
             gameListItem = gameListItem->next;
         }
@@ -163,7 +165,50 @@ void PktArcadeHost::handleControlPacket(ControlPacket* cp)
 
             iterator->next = gali;
         }
+
+        return DEVICE_OK;
     }
+
+    return DEVICE_CANCELLED;
+}
+
+int PktArcadeHost::handlePacket(PktSerialPkt* p)
+{
+    GameStatePacket* gsp = (GameStatePacket *)p->data;
+
+    // if the classes are run in broadcast mode, packets could be received multiple times.
+    // only process packets that we "own".
+    DMESG("STD OWNER: %d %d", gsp->owner, this->playerNumber);
+    if (gsp->owner == this->playerNumber)
+    {
+        GameStatePacket* gsp = (GameStatePacket *)p->data;
+
+        if (gsp->type == GAME_STATE_PKT_TYPE_INITIAL_SPRITE_DATA)
+        {
+            int spriteCount = gsp->count;
+
+            InitialSpriteData* isd = (InitialSpriteData *)gsp->data;
+            for (int i = 0; i < spriteCount; i++)
+            {
+                for (int j = 0; j < GAME_ENGINE_MAX_SPRITES; j++)
+                {
+                    // an empty sprite requires no action.
+                    if (GameEngine::instance->sprites[j] == NULL)
+                        continue;
+
+                    // if match perform state sync.
+                    if (GameEngine::instance->sprites[j]->getHash() == isd[i].sprite_id)
+                    {
+                        GameEngine::instance->sprites[j]->body.position.x = isd[i].x;
+                        GameEngine::instance->sprites[j]->body.position.y = isd[i].y;
+                    }
+                }
+            }
+        }
+        return DEVICE_OK;
+    }
+
+    return DEVICE_CANCELLED;
 }
 
 int PktArcadeHost::deviceConnected(PktDevice d)

@@ -244,33 +244,3 @@ int GameStateManager::joinGame(GameAdvertListItem* advert)
 
     return ret;
 }
-
-void GameStateManager::processPacket(PktSerialPkt* p)
-{
-    // do some stuff with the packet...
-    DMESG("STD PKT RECEIVED");
-    GameStatePacket* gsp = (GameStatePacket *)p->data;
-
-    if (gsp->type == GAME_STATE_PKT_TYPE_INITIAL_SPRITE_DATA)
-    {
-        int spriteCount = gsp->count;
-
-        InitialSpriteData* isd = (InitialSpriteData *)gsp->data;
-        for (int i = 0; i < spriteCount; i++)
-        {
-            for (int j = 0; j < GAME_ENGINE_MAX_SPRITES; j++)
-            {
-                // an empty sprite requires no action.
-                if (engine.sprites[j] == NULL)
-                    continue;
-
-                // if match perform state sync.
-                if (engine.sprites[j]->getHash() == isd[i].sprite_id)
-                {
-                    engine.sprites[j]->body.position.x = isd[i].x;
-                    engine.sprites[j]->body.position.y = isd[i].y;
-                }
-            }
-        }
-    }
-}

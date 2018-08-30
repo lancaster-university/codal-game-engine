@@ -19,10 +19,10 @@ namespace codal
         uint16_t variableHash;
 
         public:
-        uint8_t owner;
+        int8_t owner;
         PhysicsBody& body;
 
-        Sprite(ManagedString name, PhysicsBody& body, Image& i, uint8_t owner = 0);
+        Sprite(ManagedString name, PhysicsBody& body, Image& i, int8_t owner = -1);
 
         int reset();
 
