@@ -108,3 +108,22 @@ void SimplePhysicsBody::setGravity(int gravity)
     SimplePhysicsBody::gravity = gravity;
 }
 
+void SimplePhysicsBody::setXVelocity(float xVel)
+{
+    this->velocity.x = xVel;
+}
+
+void SimplePhysicsBody::setYVelocity(float yVel)
+{
+    this->velocity.y = yVel;
+}
+
+float SimplePhysicsBody::getXVelocity()
+{
+    return this->velocity.x;
+}
+
+float SimplePhysicsBody::getYVelocity()
+{
+    return this->velocity.x;
+}

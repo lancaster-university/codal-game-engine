@@ -22,10 +22,11 @@ namespace codal
 
         uint16_t variableHash;
 
-        public:
+        protected:
         int8_t owner;
         PhysicsBody& body;
 
+        public:
         Sprite(ManagedString name, PhysicsBody& body, Image& i, int8_t owner = -1);
 
         int reset();
@@ -44,19 +45,32 @@ namespace codal
 
         uint16_t getHash();
 
-        virtual int setX(int x);
+        virtual void setX(int x);
 
-        virtual int setY(int y);
+        virtual void setY(int y);
 
         int getX();
 
         int getY();
 
+        virtual void setXVelocity(float xVel);
+
+        virtual void setYVelocity(float yVel);
+
+        virtual float getXVelocity();
+
+        virtual float getYVelocity();
 
         // for optimal updates
         void setDirty(bool dirty);
 
-        bool isDirty(bool dirty);
+        bool isDirty();
+
+        friend class PktArcadeDevice;
+        friend class PktArcadeHost;
+        friend class PktArcadePlayer;
+        friend class PhysicsBody;
+        friend class GameEngine;
     };
 }
 

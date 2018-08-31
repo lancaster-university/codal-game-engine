@@ -25,16 +25,16 @@ uint16_t Sprite::getHash()
     return this->variableHash;
 }
 
-int Sprite::setX(int x)
+void Sprite::setX(int x)
 {
-    body.position.x = x;
-    return DEVICE_OK;
+    body.setX(x);
+    setDirty(true);
 }
 
-int Sprite::setY(int y)
+void Sprite::setY(int y)
 {
-    body.position.y = y;
-    return DEVICE_OK;
+    body.setY(y);
+    setDirty(true);
 }
 
 int Sprite::getX()
@@ -47,11 +47,32 @@ int Sprite::getY()
     return body.position.y;
 }
 
+void Sprite::setXVelocity(float x)
+{
+    body.setXVelocity(x);
+    setDirty(true);
+}
+
+void Sprite::setYVelocity(float y)
+{
+    body.setYVelocity(y);
+    setDirty(true);
+}
+
+float Sprite::getXVelocity()
+{
+    return body.getXVelocity();
+}
+
+float Sprite::getYVelocity()
+{
+    return body.getYVelocity();
+}
+
 int Sprite::reset()
 {
     body.position.x = this->startX;
     body.position.y = this->startY;
-
     return DEVICE_OK;
 }
 
@@ -111,7 +132,7 @@ void Sprite::setDirty(bool dirty)
         status &= ~SPRITE_STATUS_DIRTY_BIT;
 }
 
-bool Sprite::isDirty(bool dirty)
+bool Sprite::isDirty()
 {
     return (status & SPRITE_STATUS_DIRTY_BIT) ? true : false;
 }

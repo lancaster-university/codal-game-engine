@@ -35,6 +35,34 @@ namespace codal
         virtual bool intersectsWith(PhysicsBody& pb) { return false;}
 
         virtual void collideWith(PhysicsBody&) {}
+
+        virtual void setX(int x)
+        {
+            this->position.x = x;
+        }
+
+        virtual void setY(int y)
+        {
+            this->position.y = y;
+        }
+
+        virtual int getX()
+        {
+            return this->position.x;
+        }
+
+        virtual int getY()
+        {
+            return this->position.y;
+        }
+
+        virtual void setXVelocity(float xVel) {}
+
+        virtual void setYVelocity(float yVel) {}
+
+        virtual float getXVelocity() { return 0; }
+
+        virtual float getYVelocity() { return 0; }
     };
 }
 

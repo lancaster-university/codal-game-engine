@@ -31,6 +31,14 @@ namespace codal
         virtual void collideWith(PhysicsBody&);
 
         virtual void setGravity(int gravity);
+
+        virtual void setXVelocity(float xVel);
+
+        virtual void setYVelocity(float yVel);
+
+        virtual float getXVelocity();
+
+        virtual float getYVelocity();
     };
 }
 
