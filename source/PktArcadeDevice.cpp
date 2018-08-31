@@ -185,8 +185,8 @@ int PktArcadeDevice::handlePacket(PktSerialPkt* p)
                     // if match perform state sync.
                     if (GameEngine::instance->sprites[j]->getHash() == isd[i].sprite_id)
                     {
-                        GameEngine::instance->sprites[j]->body.position.x = isd[i].x;
-                        GameEngine::instance->sprites[j]->body.position.y = isd[i].y;
+                        GameEngine::instance->sprites[j]->body.setX(isd[i].x);
+                        GameEngine::instance->sprites[j]->body.setY(isd[i].y);
                     }
                 }
             }
@@ -208,9 +208,10 @@ int PktArcadeDevice::handlePacket(PktSerialPkt* p)
                     // if match perform state sync.
                     if (GameEngine::instance->sprites[j]->getHash() == msd[i].sprite_id)
                     {
-                        GameEngine::instance->sprites[j]->body.position.x = msd[i].x;
-                        GameEngine::instance->sprites[j]->body.position.y = msd[i].y;
-                        // need to standardise velocity.
+                        GameEngine::instance->sprites[j]->body.setX(msd[i].x);
+                        GameEngine::instance->sprites[j]->body.setY(msd[i].y);
+                        GameEngine::instance->sprites[j]->body.setXVelocity(msd[i].dx);
+                        GameEngine::instance->sprites[j]->body.setYVelocity(msd[i].dy);
                     }
                 }
             }

@@ -240,7 +240,6 @@ void PktArcadeHost::sendState(Event)
     InitialSpriteData isd;
 
     int spriteCount = 0;
-    int packetCount = 0;
     uint8_t* dataPointer = gsp.data;
 
     int i = 0;
@@ -269,8 +268,7 @@ void PktArcadeHost::sendState(Event)
             if (spriteCount == 0)
             {
                 safeSend((uint8_t *)&gsp, sizeof(GameStatePacket));
-                spriteCount = 0;
-                packetCount++;
+                dataPointer = gsp.data;
             }
         }
 
@@ -280,5 +278,5 @@ void PktArcadeHost::sendState(Event)
     if (spriteCount > 0)
         safeSend((uint8_t *)&gsp, sizeof(GameStatePacket));
 
-    DMESG("END SEND SPRITES %d", packetCount);
+    DMESG("END SEND SPRITES %d", spriteCount);
 }
