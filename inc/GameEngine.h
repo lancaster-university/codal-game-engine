@@ -4,7 +4,6 @@
 #include "CodalComponent.h"
 #include "CodalConfig.h"
 #include "Sprite.h"
-#include "PlayerSprite.h"
 #include "Event.h"
 #include "PhysicsBody.h"
 
@@ -53,7 +52,6 @@ namespace codal
         int getAvailableSlots();
 
         int add(Sprite& s);
-        int add(PlayerSprite& s);
 
         int remove(Sprite& s);
 

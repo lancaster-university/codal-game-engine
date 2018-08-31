@@ -103,12 +103,6 @@ int GameEngine::add(Sprite& s)
     return DEVICE_OK;
 }
 
-int GameEngine::add(PlayerSprite& s)
-{
-    this->playerSprites[s.owner] = &s;
-    return add(*(Sprite*)&s); // LOL
-}
-
 int GameEngine::remove(Sprite& s)
 {
     int i = 0;
