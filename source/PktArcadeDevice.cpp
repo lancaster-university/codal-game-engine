@@ -117,7 +117,6 @@ void PktArcadeDevice::sendInitialSprites(/* dirty filter? */)
         {
             // fill out the initial sprite data struct.
             isd.sprite_id = sprite->getHash();
-            isd.owner = this->playerNumber;
             isd.x = sprite->getX();
             isd.y = sprite->getY();
 

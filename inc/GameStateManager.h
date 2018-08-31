@@ -70,7 +70,6 @@ namespace codal
     // if the host doesn't see a collision or the data is bad, state is resynnced.
     struct InitialSpriteData
     {
-        uint8_t owner;
         uint16_t sprite_id;     // the id of a sprite
         int16_t x;
         int16_t y;

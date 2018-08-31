@@ -251,7 +251,6 @@ void PktArcadeHost::sendState(Event)
         if (sprite)
         {
             // fill out the initial sprite data struct.
-            isd.owner = sprite->owner;
             isd.sprite_id = sprite->getHash();
             isd.x = sprite->getX();
             isd.y = sprite->getY();
