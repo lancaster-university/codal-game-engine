@@ -227,17 +227,6 @@ int PktArcadeHost::deviceRemoved()
     return DEVICE_OK;
 }
 
-void PktArcadeHost::safeSend(uint8_t* data, int len)
-{
-    // queue for sending, and reset count
-    int ret = -1;
-
-    // should move to pktserialprotocol send (drivers shouldn't have to guarantee sending...)
-    while((ret = PktSerialProtocol::send(data, len, this->device.address)) != DEVICE_OK)
-        // queue full, sleep a lil.
-        fiber_sleep(10);
-}
-
 void PktArcadeHost::sendState(Event)
 {
     DMESG("SEND SPRITES ADDR: %d", this->device.address);

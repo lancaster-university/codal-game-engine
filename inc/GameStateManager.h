@@ -115,6 +115,12 @@ namespace codal
 
     class PktArcadeDevice : public PktSerialDriver
     {
+        protected:
+        void sendInitialSprites();
+        void sendMovingSprites();
+
+        void safeSend(uint8_t* data, int size);
+
         public:
         Sprite* controllingSprites[PKT_ARCADE_DEVICE_MAX_CONTROL_SPRITES];
         uint8_t playerNumber;
@@ -139,8 +145,6 @@ namespace codal
     class PktArcadeHost : public PktArcadeDevice
     {
         GameAdvertListItem* games;
-
-        void safeSend(uint8_t* data, int len);
 
         public:
         PktArcadeHost(PktDevice d, uint8_t playerNumber, GameStateManager& manager);
